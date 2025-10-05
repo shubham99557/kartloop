@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container my-5">
+  <div class="card shadow-sm p-4">
+
+    <!-- Order Heading -->
+    <div class="text-center mb-4">
+      <h2 class="text-success"><i class="bi bi-check-circle-fill"></i> Order Placed Successfully!</h2>
+      <p class="text-muted">Thank you for shopping with Kartloop.</p>
+    </div>
+
+    <!-- Order Info -->
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <h5>Order Details</h5>
+        <p><strong>Order ID:</strong> {{ order.id }}</p>
+        <p><strong>Status:</strong> {{ order.status|capfirst }}</p>
+        <p><strong>Placed on:</strong> {{ order.created_at|date:"F j, Y, g:i a" }}</p>
+      </div>
+      <div class="col-md-6 mb-3">
+        <h5>Delivery Address</h5>
+        <p>
+          {{ order.address.full_name }}<br>
+          {{ order.address.street_address }}<br>
+          {{ order.address.city }}, {{ order.address.state }} - {{ order.address.zip_code }}<br>
+          {{ order.address.country }}<br>
+          Phone: {{ order.address.phone }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Method Summary -->
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <h5>Delivery Method</h5>
+        <p>{{ order.delivery_method }}</p>
+      </div>
+      <div class="col-md-6 mb-3">
+        <h5>Payment Method</h5>
+        <p>{{ order.payment_method }}</p>
+      </div>
+    </div>
+
+    <!-- Ordered Items -->
+    <div class="mb-4">
+      <h5>Items Ordered</h5>
+      <ul class="list-group">
+        {% for item in order.items.all %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <strong>{{ item.product.name }}</strong><br>
+              <small>Quantity: {{ item.quantity }}</small>
+            </div>
+            <span>₹{{ item.product.price|floatformat:2 }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <!-- Grand Total -->
+    <div class="text-end mb-3">
+      <h5>Total: ₹{{ order.total_amount|floatformat:2 }}</h5>
+    </div>
+
+    <!-- Continue Shopping -->
+    <div class="text-center">
+      <a href="{% url 'core:home' %}" class="btn btn-primary">Continue Shopping</a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

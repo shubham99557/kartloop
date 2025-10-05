@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .teal-bg {
+    background-color: #008080 !important;
+    color: #fff !important;
+  }
+  .teal-outline-btn {
+    border-color: #008080;
+    color: #008080;
+  }
+  .teal-outline-btn:hover {
+    background-color: #008080;
+    color: #fff;
+  }
+  .teal-border {
+    border-color: #008080 !important;
+  }
+  .icon-box i {
+    font-size: 2rem;
+  }
+</style>
+
+<div class="container my-5">
+  <div class="row">
+    <!-- Sidebar with avatar -->
+    <div class="col-md-4 text-center mb-4">
+      <img src="https://cdn-icons-png.flaticon.com/512/149/149071.png" alt="Avatar" class="img-fluid rounded-circle shadow" width="150">
+      <h4 class="mt-3">{{ user.username }}</h4>
+      <p class="text-muted">{{ user.email }}</p>
+
+      <!-- Edit Profile Button -->
+      <a href="{% url 'users:edit-profile' %}" class="btn teal-outline-btn mt-2 w-75">
+        <i class="fa fa-edit me-1"></i> Edit Profile
+      </a>
+
+      <!-- Logout Button -->
+      <a href="{% url 'users:logout' %}" class="btn btn-outline-danger mt-2 w-75">
+        <i class="fas fa-sign-out-alt me-1"></i> Logout
+      </a>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="col-md-8">
+      {% if is_seller %}
+        <!-- Seller Dashboard -->
+        <h3 class="mb-4 text-teal">🏬 Seller Dashboard</h3>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="card teal-bg shadow icon-box">
+              <div class="card-body text-center">
+                <i class="fas fa-box"></i>
+                <h5 class="card-title mt-2">Products</h5>
+                <p class="card-text fs-5">{{ vendor.product_set.count }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="card" style="background-color: #009688; color: #fff;">
+              <div class="card-body text-center icon-box">
+                <i class="fas fa-shopping-cart"></i>
+                <h5 class="card-title mt-2">Orders</h5>
+                <p class="card-text fs-5">--</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="card" style="background-color: #26a69a; color: #fff;">
+              <div class="card-body text-center icon-box">
+                <i class="fas fa-rupee-sign"></i>
+                <h5 class="card-title mt-2">Total Sales</h5>
+                <p class="card-text fs-5">--</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Seller Info -->
+        <div class="card mt-4 shadow-sm teal-border border-2">
+          <div class="card-body">
+            <h5 class="card-title text-teal">📝 Seller Information</h5>
+            <p><strong>Shop Name:</strong> {{ profile.shop_name }}</p>
+            <p><strong>Phone:</strong> {{ profile.phone }}</p>
+            <p><strong>Address:</strong> {{ profile.address }}</p>
+          </div>
+        </div>
+      {% else %}
+        <!-- Customer Profile -->
+        <h3 class="mb-4 text-teal">🛍️ Customer Profile</h3>
+        <div class="card shadow-sm teal-border border-2">
+          <div class="card-body">
+            <p><strong>Full Name:</strong> {{ user.username }}</p>
+            <p><strong>Email:</strong> {{ user.email }}</p>
+            <p><strong>Phone:</strong> {{ user.customerprofile.phone }}</p>
+            <p><strong>Address:</strong> {{ user.customerprofile.address }}</p>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}

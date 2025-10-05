@@ -1,0 +1,644 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>{% block title %}Kartloop{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <!-- Swiper CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+</head>
+<body style="font-family: 'Roboto', sans-serif;">
+
+<!-- ✅ Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark shadow-sm py-2"
+  style="background: radial-gradient(circle at center, #2addd4ff 0%, #008080 100%);">
+
+  <div class="container-fluid px-4">
+
+    <!-- 🔷 Logo -->
+    <a class="navbar-brand d-none d-lg-flex align-items-center fw-bold fs-4 logo-hover" href="/">
+      <span class="fs-3 me-2">🛍️</span>
+      <span>
+        <span style="color:#ffffff;">Kart</span><span style="color:#ffc107;">loop</span>
+      </span>
+    </a>
+    <!-- ✅ Mobile top row: Logo + Login + Cart -->
+<div class="d-flex justify-content-between align-items-center w-100 d-lg-none">
+  <!-- Logo -->
+  <a class="navbar-brand d-flex align-items-center fw-bold fs-4" href="/">
+    <span class="fs-3 me-2">🛍️</span>
+    <span>
+      <span style="color:#ffffff;">Kart</span><span style="color:#ffc107;">loop</span>
+    </span>
+  </a>
+
+  <div class="d-flex align-items-center">
+    {% if not user.is_authenticated %}
+      <a class="nav-link text-white fw-medium me-3" href="{% url 'users:login' %}">
+        <i class="fa-solid fa-right-to-bracket"></i>Login
+      </a>
+    {% else %}
+  <div class="dropdown me-3">
+    <a class="nav-link dropdown-toggle text-white fw-medium" href="#" id="mobileAccountDropdown"
+       role="button" data-bs-toggle="dropdown" aria-expanded="false">
+      <i class="fa-solid fa-user"></i>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="mobileAccountDropdown">
+      <li><a class="dropdown-item" href="{% url 'users:profile' %}">👤 My Profile</a></li>
+      <li><a class="dropdown-item" href="#">📦 My Orders</a></li>
+      <li><a class="dropdown-item" href="#">🏷 Coupons</a></li>
+      <li><a class="dropdown-item" href="#">🎁 Gift Cards</a></li>
+      <li><a class="dropdown-item" href="#">🔔 Notifications</a></li>
+      <li><hr class="dropdown-divider"></li>
+      <li>
+        <form method="POST" action="{% url 'users:logout' %}">
+          {% csrf_token %}
+          <button type="submit" class="dropdown-item text-danger w-100 text-start">🚪 Logout</button>
+        </form>
+      </li>
+    </ul>
+  </div>
+{% endif %}
+
+
+    <a class="nav-link text-white fw-medium" href="{% url 'core:view_cart' %}">
+      <i class="fa-solid fa-cart-shopping"></i>
+      {% if cart_count and cart_count > 0 %}
+        <span class="badge rounded-pill bg-warning text-dark" style="font-size: 0.75rem;">
+          {{ cart_count }}
+        </span>
+      {% endif %}
+    </a>
+  </div>
+</div>
+<!-- ✅ Mobile search bar (2nd row) -->
+<form class="d-flex d-lg-none w-100 mt-2" method="GET" action="{% url 'core:search' %}" role="search">
+  <input class="form-control rounded-pill px-4 shadow-sm" type="search" name="q"
+         placeholder="🔍 Search for products..." value="{{ request.GET.q|default:'' }}" />
+  <button class="btn btn-outline-secondary ms-2" type="submit"><i class="fas fa-search"></i></button>
+</form>
+
+
+
+      <!-- 🔍 Search -->
+    <form class="d-flex mx-lg-4 my-3 my-lg-0 flex-grow-1 d-none d-lg-flex" method="GET" action="{% url 'core:search' %}" role="search" aria-label="Site Search">
+      <input
+        class="form-control rounded-pill px-4 shadow-sm"
+        type="search"
+        name="q"
+        placeholder="🔍 Search for products, brands and more..."
+        value="{{ request.GET.q|default:'' }}"
+        aria-label="Search products, brands, and more"
+        autocomplete="off"
+      />
+      <button class="btn btn-outline-secondary ms-2" type="submit" aria-label="Submit search">
+        <i class="fas fa-search"></i>
+      </button>
+    </form>
+
+
+
+      <!-- 🔗 Nav Menu -->
+      <ul class="navbar-nav ms-auto align-items-center gap-lg-3">
+        {% if not user.is_authenticated %}
+          <li class="nav-item d-none d-lg-block">
+            <a class="nav-link text-white fw-medium" href="{% url 'users:login' %}">
+              <i class="fa-solid fa-right-to-bracket me-1"></i>Login
+            </a>
+          </li>
+          <li class="nav-item d-none d-lg-block">
+            <a class="nav-link text-white fw-medium" href="{% url 'users:seller-signup' %}">
+              <i class="fa-solid fa-store me-1"></i>Become a Seller
+            </a>
+          </li>
+        {% else %}
+          {% if user.is_vendor %}
+            <li class="nav-item">
+              <a class="nav-link text-white fw-medium" href="{% url 'vendor_dashboard' %}">
+                <i class="fa-solid fa-chart-line me-1"></i>Dashboard
+              </a>
+            </li>
+          {% endif %}
+          <li class="nav-item dropdown d-none d-lg-block">
+            <a class="nav-link dropdown-toggle text-white fw-medium" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+              <i class="fa-solid fa-user me-1"></i>Account
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+              <li><a class="dropdown-item" href="{% url 'users:profile' %}">👤 My Profile</a></li>
+              <li><a class="dropdown-item" href="#">📦 My Orders</a></li>
+              <li><a class="dropdown-item" href="#">🏷 Coupons</a></li>
+              <li><a class="dropdown-item" href="#">🎁 Gift Cards</a></li>
+              <li><a class="dropdown-item" href="#">🔔 Notifications</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <form method="POST" action="{% url 'users:logout' %}">
+                  {% csrf_token %}
+                  <button type="submit" class="dropdown-item text-danger w-100 text-start">🚪 Logout</button>
+                </form>
+              </li>
+            </ul>
+          </li>
+        {% endif %}
+
+        <!-- 🛒 Cart -->
+        <li class="nav-item d-none d-lg-block">
+          <a class="nav-link text-white fw-medium d-flex align-items-center" href="{% url 'core:view_cart' %}">
+            <i class="fa-solid fa-cart-shopping me-1"></i>
+              <span class="me-1">Cart</span>
+                {% if cart_count and cart_count > 0 %}
+                <span class="badge rounded-pill bg-warning text-dark" style="font-size: 0.75rem;">
+                {{ cart_count }}
+              </span>
+              {% endif %}
+          </a>
+        </li>
+
+
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+
+<!-- ✅ Messages -->
+{% if messages %}
+  <div class="container mt-3">
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<!-- ✅ Main -->
+<main class="container my-4">
+  {% block content %}{% endblock %}
+</main>
+
+<!-- ✅ Footer -->
+<footer class="bg-dark text-light pt-4 mt-5">
+  <div class="container">
+    <div class="row text-center text-md-start">
+      <div class="col-md-3 mb-4">
+        <h5 class="text-warning">Kartloop</h5>
+        <p>Your one-stop destination for electronics, fashion, groceries and more.</p>
+      </div>
+      <div class="col-md-2 mb-4">
+        <h6 class="text-uppercase fw-bold mb-2">Categories</h6>
+        <ul class="list-unstyled">
+          <li><a href="#" class="text-light text-decoration-none">Men's Wear</a></li>
+          <li><a href="#" class="text-light text-decoration-none">Women's Wear</a></li>
+          <li><a href="#" class="text-light text-decoration-none">Groceries</a></li>
+          <li><a href="#" class="text-light text-decoration-none">Gadgets</a></li>
+        </ul>
+      </div>
+      <div class="col-md-2 mb-4">
+        <h6 class="text-uppercase fw-bold mb-2">Help</h6>
+        <ul class="list-unstyled">
+          <li><a href="#" class="text-light text-decoration-none">Customer Care</a></li>
+          <li><a href="#" class="text-light text-decoration-none">Returns</a></li>
+          <li><a href="#" class="text-light text-decoration-none">Privacy</a></li>
+          <li><a href="#" class="text-light text-decoration-none">Terms</a></li>
+        </ul>
+      </div>
+      <div class="col-md-2 mb-4">
+        <h6 class="text-uppercase fw-bold mb-2">Links</h6>
+        <ul class="list-unstyled">
+          <li><a href="#" class="text-light text-decoration-none">My Orders</a></li>
+          <li><a href="#" class="text-light text-decoration-none">Wishlist</a></li>
+          <li><a href="#" class="text-light text-decoration-none">Sell on Kartloop</a></li>
+        </ul>
+      </div>
+      <div class="col-md-3 mb-4">
+        <h6 class="text-uppercase fw-bold mb-2">Contact</h6>
+        <p><i class="fas fa-envelope me-2"></i> support@kartloop.com</p>
+        <p><i class="fas fa-phone me-2"></i> +91 98765 43210</p>
+        <p><i class="fas fa-map-marker-alt me-2"></i> India</p>
+      </div>
+    </div>
+  </div>
+  <div class="text-center py-3 bg-secondary text-white small">
+    © {% now "Y" %} Kartloop. All rights reserved.
+  </div>
+</footer>
+
+<!-- ✅ AI Assistant - NOVA AUTO VOICE ROBOT FRIEND CHAT -->
+<style>
+  #ai-bot {
+    position: fixed;
+    bottom: 30px; right: 32px; width: 350px; max-width: 98vw;
+    background: #fff; border-radius: 18px;
+    box-shadow: 0 4px 36px #19376d80; z-index: 9999;
+    font-family: 'Roboto', sans-serif; border: 1.5px solid #eee;
+    min-height: 330px; display: flex; flex-direction: column;
+    transition: box-shadow .2s;
+  }
+  .chatbot-header {
+  style="background: radial-gradient(circle at center, #2addd4ff 0%, #008080 100%);">
+    background: #008080; color: #ffe67c; border-radius: 18px 18px 0 0;
+    padding: 13px 16px; font-size: 18px; font-weight: bold; letter-spacing: 0.7px;
+    display: flex; align-items: center; cursor: move;
+    user-select: none; justify-content: space-between; gap:11px;
+    box-shadow: 0 2px 18px #00225b10;
+  }
+  .chatbot-header .fa-robot {
+    color: #ffe67c; margin-right: 10px; font-size: 22px;
+    text-shadow: 0 1px 1px #008080;
+    animation: headnod 1.5s infinite alternate;
+  }
+  @keyframes headnod { 0%{transform:rotate(-6deg);} 100%{transform:rotate(10deg);} }
+  .chatbot-body {
+    flex: 1; background: #f6f8fa; padding: 13px; overflow-y: auto; font-size: 15px;
+  }
+  .user-msg, .nova-msg {
+    margin-bottom: 12px; display: flex; flex-direction: row;
+  }
+  .user-msg { justify-content: flex-end; }
+  .nova-msg { justify-content: flex-start; }
+  .user-balloon {
+    background: #19376d; color: #fff; border-radius: 13px 13px 2px 13px;
+    padding: 6px 15px; max-width: 82%; word-break: break-word;
+    font-family: 'Roboto Mono', 'Roboto', monospace;
+  }
+  .nova-balloon {
+    background: linear-gradient(90deg,#e2e9fb 80%,#ffe67c 130%);
+    color: #23243c;
+    border-radius: 13px 13px 13px 3px;
+    padding: 6px 15px; max-width: 82%; word-break: break-word;
+    display: flex; align-items: center; gap:9px;
+    font-family: 'Roboto Mono', 'Roboto', monospace;
+    font-size: 15.4px;
+  }
+  .nova-balloon .fa-robot {
+    font-size: 19px; color: #faab09; margin-right: 6px;
+    text-shadow: 0 1px 1px #1c223950;
+  }
+  #chat-close { font-size: 19px; transition:.1s; cursor:pointer;}
+  #chat-close:hover { color: #ffc107; }
+  #chat-turnoff { font-size: 19px; cursor:pointer; margin-left:10px; color:#ffd666; opacity:0.7;}
+  #chat-turnoff:hover { color: #fe3636; opacity:1; }
+  @media (max-width:500px){ #ai-bot{right:2vw;width:98vw;min-width: unset;bottom:2vw;} }
+  #ai-bot-mic-indicator {
+    display:inline-block;vertical-align:middle;margin-left:10px;
+    background:#f8db72;border-radius:10px;padding:2px 8px;font-size:13px;color:#1a2342;
+    font-weight:600;animation:blinkmic 1.3s infinite;
+  }
+  @keyframes blinkmic { 0%{opacity:.94;} 45%{opacity:.25;} 100%{opacity:.9;} }
+  .nova-input-row {
+    display: flex; align-items: center; gap: 8px; border-top: 1.5px solid #e3e3e3;
+    background: #fbfaff;
+    padding: 8px 12px;
+    border-radius: 0 0 18px 18px;
+  }
+  #nova-search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 8px 13px;
+    border-radius: 11px;
+    background: #edf1fa;
+    font-size: 15.2px;
+    margin-right: 2px;
+  }
+  #nova-search-send, #nova-mic-btn {
+    background: #008080;
+    color: #ffe67c;
+    border: none;
+    font-size: 18px;
+    padding: 6px 14px;
+    border-radius: 11px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .12s, color .12s;
+  }
+  #nova-search-send:hover {
+    background: #ffe67c; color: #19376d;
+  }
+  #nova-mic-btn.active {
+    background: #ffe67c; color: #19376d;
+    animation: blinkmic 1.2s infinite;
+  }
+  .nova-notice {
+    position: fixed; top: 38px; left: 50%; transform: translateX(-50%);
+    z-index: 99999; background: #1f3b70;
+    color: #ffe67c; padding: 13px 32px;
+    border-radius: 12px;
+    box-shadow: 0 4px 32px #19376d65;
+    font-size: 17px;
+    font-weight: 600;
+    max-width: 87vw;
+    border: 1.5px solid #ffe67c90;
+    text-align: center;
+    opacity: 0.96;
+    font-family: inherit;
+  }
+  /* The robot icon button */
+  #nova-fab {
+    position: fixed;
+    bottom: 34px;
+    right: 34px;
+    background: #ffe67c;
+    color: #20264d;
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    font-size: 34px;
+    box-shadow: 0 11px 32px #2d3f88b0;
+    z-index:12000;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: background .2s, color .2s, box-shadow .2s;
+    border: 2.5px solid #ffe67c99;
+    animation: fabnod 1.5s infinite alternate;
+  }
+  #nova-fab:hover { background: #19376d; color: #ffc107; }
+  @keyframes fabnod { 0%{transform:rotate(-10deg);} 100%{transform:rotate(12deg);} }
+  @media (max-width:500px){ #nova-fab{right:2vw;bottom:2vw;} }
+
+  /* ==========================
+   Mobile Navbar Adjustments
+========================== */
+@media (max-width: 991px) { /* target mobile and tablets */
+  .navbar-nav {
+    flex-wrap: nowrap;       /* keep items in single line */
+    overflow-x: auto;        /* allow horizontal scroll if needed */
+    gap: 10px;               /* small space between items */
+  }
+  .navbar-nav li {
+    flex-shrink: 0;          /* prevent items from shrinking */
+  }
+  form.d-flex {
+    flex: 1 0 auto;          /* allow search to stay inline but smaller */
+    min-width: 120px;        /* optional: prevent too small */
+    margin: 0 5px;           /* small spacing from other items */
+  }
+  .navbar-brand {
+    flex-shrink: 0;          /* logo does not shrink */
+  }
+  .navbar-collapse {
+    display: flex !important;   /* prevent collapsing on mobile */
+    flex-direction: row;        /* keep all items in one row */
+    align-items: center;
+    overflow-x: auto;           /* horizontal scroll if needed */
+  }
+}
+
+</style>
+
+<!-- Floating robot FAB -->
+<div id="nova-fab" title="Open Nova" style="display:none;">
+  <i class="fa-solid fa-robot"></i>
+</div>
+
+<!-- Chatbot Widget -->
+<div id="ai-bot" class="chatbot draggable shadow" style="display:flex;">
+  <div class="chatbot-header">
+    <span><i class="fa-solid fa-robot"></i> <span style="color:#fff;">Nova</span></span>
+    <span id="chat-turnoff" title="Turn off Nova" style="font-size:21px;">&#x23FB;</span>
+    <span id="chat-close" title="Minimize Nova">✖</span>
+  </div>
+  <div id="chat-messages" class="chatbot-body"></div>
+  <form class="nova-input-row" onsubmit="novaUserSubmit(event)">
+    <input id="nova-search-input" type="text" autocomplete="off" placeholder="Type or ask what you need..." />
+    <button type="button" id="nova-mic-btn" title="Speak"><i class="fa-solid fa-microphone"></i></button>
+    <button type="submit" id="nova-search-send" title="Send"><i class="fa fa-paper-plane"></i></button>
+  </form>
+</div>
+
+<script>
+const fab = document.getElementById('nova-fab');
+const bot = document.getElementById("ai-bot");
+function openNova(){ bot.style.display='flex'; fab.style.display='none'; }
+function closeNova(){ bot.style.display='none'; fab.style.display='flex'; }
+fab.onclick = openNova;
+document.getElementById("chat-close").onclick = closeNova;
+document.getElementById("chat-turnoff").onclick = function(){
+  bot.style.display='none'; fab.style.display='none';
+};
+// --- DRAGGABLE WIDGET ---
+const header = bot.querySelector(".chatbot-header");
+header.onmousedown = dragMouseDown;
+function dragMouseDown(e) {
+  e.preventDefault();
+  let pos3 = e.clientX, pos4 = e.clientY;
+  document.onmouseup = closeDrag; document.onmousemove = drag;
+  function drag(e) {
+    e.preventDefault();
+    const pos1 = pos3 - e.clientX, pos2 = pos4 - e.clientY;
+    pos3 = e.clientX; pos4 = e.clientY;
+    bot.style.top = (bot.offsetTop - pos2) + "px";
+    bot.style.left = (bot.offsetLeft - pos1) + "px";
+    bot.style.right = "auto"; bot.style.bottom = "auto";
+  }
+  function closeDrag() { document.onmouseup = null; document.onmousemove = null; }
+}
+
+// NOVA LOGIC
+const chatBox = document.getElementById('chat-messages');
+let lastBotReply = '';
+let listening = false;
+let recognition = null;
+let novaSpeaking = false;
+let aiWelcome = false;
+
+// Add message
+function novaAddMsg(text, who="bot") {
+  let m = document.createElement('div');
+  m.className = who==='user'?'user-msg':'nova-msg';
+  m.innerHTML = who==='user'
+    ? `<div class="user-balloon">${text}</div>`
+    : `<div class="nova-balloon"><i class="fa-solid fa-robot"></i>${text}</div>`;
+  chatBox.appendChild(m);
+  setTimeout(()=>{ chatBox.scrollTop = chatBox.scrollHeight; }, 50);
+  if(who==="bot") { lastBotReply = text; speakBot(text); }
+}
+
+function speakBot(text) {
+  if (!window.speechSynthesis) return;
+  novaSpeaking = true;
+  let utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'en-IN';
+  utter.rate = 1.02;
+  utter.pitch = 1.08;
+  utter.volume = 1;
+  let v = window.speechSynthesis.getVoices().find(v => v.name.toLowerCase().includes('robot') || v.name.toLowerCase().includes('google'));
+  if(!v) v = window.speechSynthesis.getVoices().find(v => v.lang.startsWith('en'));
+  if(v) utter.voice = v;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utter);
+  utter.onend = function() { novaSpeaking = false; }
+  utter.onerror = function() { novaSpeaking = false; }
+}
+
+function novaUserSubmit(e){
+  e.preventDefault();
+  const input = document.getElementById('nova-search-input');
+  let msg = input.value.trim();
+  if(!msg) return;
+  input.value = "";
+  novaAsk(msg);
+  return false;
+}
+
+const micBtn = document.getElementById("nova-mic-btn");
+micBtn.onclick = function(e) {
+  e.preventDefault();
+  if(!novaSpeaking) novaListen();
+};
+
+function novaAsk(msg) {
+  if(!msg) return;
+  novaAddMsg(msg,"user");
+  fetch('/assistant/chat/', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded','X-CSRFToken': getCookie('csrftoken') },
+    body: 'message=' + encodeURIComponent(msg)
+  }).then(response => response.json())
+    .then(data => {
+      if (data.reply) novaAddMsg(data.reply, 'bot');
+      if (data.action) handleNovaAction(data.action);
+      if (data.notify) handleNovaNotify(data.notify);
+      else if (data.error) novaAddMsg(`<b>Error:</b> ${data.error}`,'bot');
+      // <<== DO NOT auto-listen after answering
+    });
+}
+
+// Actions from backend
+function handleNovaAction(action) {
+  if(action.type === "redirect" && action.page){
+    setTimeout(()=>{ window.location = action.page; }, 1200);
+  }
+  else if(action.type === "js_func") {
+    if(action.func === "scrollDown") window.scrollBy({top:window.innerHeight/2,behavior:'smooth'});
+    else if(action.func === "scrollUp") window.scrollBy({top:-window.innerHeight/2,behavior:'smooth'});
+  }
+  else if(action.type === "add_to_cart" && action.product_name) {
+    showNovaNotice(`Added "<b>${action.product_name}</b>" to your cart!`);
+  }
+  else if(action.type === "add_to_wishlist" && action.product_name) {
+    showNovaNotice(`Added "<b>${action.product_name}</b>" to your wishlist!`);
+  }
+  else if(action.type === "update_profile" && action.field && action.value) {
+    showNovaNotice(`Updating your profile: <b>${action.field.replace('_', ' ')}</b> to <b>${action.value}</b>`);
+  }
+  else if(action.type === "update_order_status" && action.order_id) {
+    showNovaNotice(`Order #${action.order_id} status updated to "${action.new_status}"!`);
+  }
+  else if(action.type === "track_order" && action.order_id) {
+    showNovaNotice(`Tracking status for order #${action.order_id} ...`);
+  }
+  else if(action.type === "apply_coupon" && action.coupon) {
+    showNovaNotice(`Applying coupon: <b>${action.coupon}</b>`);
+  }
+  else if(action.type === "check_pincode" && action.pincode) {
+    showNovaNotice(`Checking delivery for pincode: <b>${action.pincode}</b>`);
+  }
+  else if(action.type === "show_orders") {
+    showNovaNotice(`Here are your orders!`);
+  }
+}
+function handleNovaNotify(notify) {
+  if(notify.type === "special_offer") {
+    showNovaNotice(`💡 <b>Offer:</b> ${notify.offer || "Check the latest deals in Offers!"}`);
+  } else if(notify.type === "new_arrival") {
+    showNovaNotice("🆕 New arrivals just landed!");
+  } else if(notify.type === "reminder") {
+    showNovaNotice(`⏰ Reminder set: ${notify.text || ''}`);
+  }
+}
+function showNovaNotice(html) {
+  let el = document.createElement('div');
+  el.className = "nova-notice";
+  el.innerHTML = html;
+  document.body.appendChild(el);
+  setTimeout(()=>{ el.remove(); }, 3900);
+}
+
+// -- VOICE LISTEN: only when user clicks mic or form, never auto after bot talks!
+function novaListen() {
+  if (listening || novaSpeaking) return;
+  if(!document.getElementById("ai-bot-mic-indicator")) {
+    let ind = document.createElement("span");
+    ind.innerHTML = '<i class="fa fa-microphone"></i> Listening...';
+    ind.id = "ai-bot-mic-indicator";
+    header.appendChild(ind);
+  }
+  if (!recognition) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SpeechRecognition) {
+      novaAddMsg("Sorry, voice recognition is not supported in your browser.","bot");
+      if(document.getElementById("ai-bot-mic-indicator"))
+        document.getElementById("ai-bot-mic-indicator").remove();
+      return;
+    }
+    recognition = new SpeechRecognition();
+    recognition.lang = 'en-IN';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+  }
+  listening = true;
+  micBtn.classList.add("active");
+  recognition.start();
+  recognition.onresult = function(event) {
+    listening = false;
+    micBtn.classList.remove("active");
+    if(document.getElementById("ai-bot-mic-indicator"))
+      document.getElementById("ai-bot-mic-indicator").remove();
+    const transcript = event.results[0][0].transcript.trim();
+    if(transcript) novaAsk(transcript);
+  };
+  recognition.onerror = function() {
+    listening = false;
+    micBtn.classList.remove("active");
+    if(document.getElementById("ai-bot-mic-indicator"))
+      document.getElementById("ai-bot-mic-indicator").remove();
+  };
+  recognition.onend = function() {
+    listening = false;
+    micBtn.classList.remove("active");
+    if(document.getElementById("ai-bot-mic-indicator"))
+      document.getElementById("ai-bot-mic-indicator").remove();
+  }
+}
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+window.addEventListener('DOMContentLoaded', function() {
+  bot.style.display = "none";
+  fab.style.display = "flex";
+  if (!aiWelcome) {
+    aiWelcome = true;
+    novaAddMsg("", 'bot');
+    // NO auto voice listen
+  }
+});
+</script>
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Swiper JS -->
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+</body>
+</html>

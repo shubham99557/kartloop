@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+  <h2 class="mb-4">Checkout</h2>
+  <form method="POST" action="{% url 'core:checkout' %}">
+    {% csrf_token %}
+
+    <!-- Address Fields -->
+    <div id="address-section" class="mb-4">
+      <h5>Shipping Address</h5>
+      <div class="row g-3">
+        <div class="col-md-6">
+          {{ form.full_name.label_tag }} {{ form.full_name }}
+          {% if form.full_name.errors %}
+            <div class="text-danger small">{{ form.full_name.errors }}</div>
+          {% endif %}
+        </div>
+        <div class="col-md-6">
+          {{ form.phone.label_tag }} {{ form.phone }}
+          {% if form.phone.errors %}
+            <div class="text-danger small">{{ form.phone.errors }}</div>
+          {% endif %}
+        </div>
+        <div class="col-md-12">
+          {{ form.address_line1.label_tag }} {{ form.address_line1 }}
+          {% if form.address_line1.errors %}
+            <div class="text-danger small">{{ form.address_line1.errors }}</div>
+          {% endif %}
+        </div>
+        <div class="col-md-12">
+          {{ form.address_line2.label_tag }} {{ form.address_line2 }}
+        </div>
+        <div class="col-md-4">
+          {{ form.city.label_tag }} {{ form.city }}
+          {% if form.city.errors %}
+            <div class="text-danger small">{{ form.city.errors }}</div>
+          {% endif %}
+        </div>
+        <div class="col-md-4">
+          {{ form.state.label_tag }} {{ form.state }}
+          {% if form.state.errors %}
+            <div class="text-danger small">{{ form.state.errors }}</div>
+          {% endif %}
+        </div>
+        <div class="col-md-4">
+          {{ form.postal_code.label_tag }} {{ form.postal_code }}
+          {% if form.postal_code.errors %}
+            <div class="text-danger small">{{ form.postal_code.errors }}</div>
+          {% endif %}
+        </div>
+        <div class="col-md-6">
+          {{ form.country.label_tag }} {{ form.country }}
+          {% if form.country.errors %}
+            <div class="text-danger small">{{ form.country.errors }}</div>
+          {% endif %}
+        </div>
+      </div>
+      <button type="button" id="edit-address-btn" class="btn btn-secondary mt-3" style="display:none;">Edit Address</button>
+    </div>
+
+    <!-- Delivery Method -->
+    <div class="mb-4">
+      <h5>Choose Delivery Method</h5>
+      <div>
+        {% for method in form.fields.delivery_method.queryset %}
+          <div class="form-check mb-2">
+            <input
+              class="form-check-input"
+              type="radio"
+              id="id_delivery_method_{{ forloop.counter0 }}"
+              name="{{ form.delivery_method.name }}"
+              value="{{ method.pk }}"
+              {% if form.delivery_method.value|stringformat:"s" == method.pk|stringformat:"s" %}checked{% endif %}
+            >
+            <label class="form-check-label" for="id_delivery_method_{{ forloop.counter0 }}">
+              {{ method.name }} - ₹{{ method.cost }} ({{ method.estimated_days }} days)
+            </label>
+          </div>
+        {% empty %}
+          <p>No delivery methods available.</p>
+        {% endfor %}
+      </div>
+      {% if form.delivery_method.errors %}
+        <div class="text-danger small">{{ form.delivery_method.errors }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Payment Method -->
+    <div class="mb-4">
+      <h5>Choose Payment Method</h5>
+      {{ form.payment_method }}
+      {% if form.payment_method.errors %}
+        <div class="text-danger small">{{ form.payment_method.errors }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Submit Button -->
+    <div class="mt-4">
+      <button type="submit" class="btn btn-success btn-lg w-100" id="submit-btn">Place Order</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    let fullName = document.querySelector('#id_full_name').value.trim();
+    if (fullName.length > 0) {
+      toggleAddressFields(true);
+    }
+  });
+
+  function toggleAddressFields(disable) {
+    const addressFields = [
+      '#id_full_name', '#id_phone', '#id_address_line1', '#id_address_line2',
+      '#id_city', '#id_state', '#id_postal_code', '#id_country'
+    ];
+    addressFields.forEach(function(selector) {
+      const field = document.querySelector(selector);
+      field.disabled = disable;
+    });
+
+    const editBtn = document.querySelector('#edit-address-btn');
+    if (disable) {
+      editBtn.style.display = 'inline-block';
+      document.querySelector('#submit-btn').textContent = 'Place Order';
+    } else {
+      editBtn.style.display = 'none';
+      document.querySelector('#submit-btn').textContent = 'Update Address & Place Order';
+    }
+  }
+
+  document.querySelector('#edit-address-btn').addEventListener('click', function() {
+    toggleAddressFields(false);
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load form_tags %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+  <div class="card shadow-lg rounded">
+    <div class="card-header bg-warning text-white">
+      <h4 class="mb-0"><i class="fas fa-edit"></i> Edit Product</h4>
+    </div>
+    <div class="card-body">
+
+      <form method="POST" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        <div class="row">
+
+          <div class="col-md-6 mb-3">
+            <label for="id_name" class="form-label">Product Name</label>
+            {{ form.name|add_class:"form-control" }}
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="id_category" class="form-label">Category</label>
+            {{ form.category|add_class:"form-select" }}
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label for="id_price" class="form-label">Price (₹)</label>
+            {{ form.price|add_class:"form-control" }}
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label for="id_stock" class="form-label">Stock</label>
+            {{ form.stock|add_class:"form-control" }}
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label for="id_brand" class="form-label">Brand</label>
+            {{ form.brand|add_class:"form-control" }}
+          </div>
+
+          <div class="col-md-12 mb-3">
+            <label for="id_description" class="form-label">Product Description</label>
+            {{ form.description|add_class:"form-control" }}
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="id_image" class="form-label">Main Product Image</label>
+            {{ form.image|add_class:"form-control" }}
+            <small class="text-muted">Max file size: 2MB</small>
+          </div>
+
+          <div class="col-md-6 d-flex align-items-center mb-3">
+            {% if product.image %}
+              <img src="{{ product.image.url }}" class="img-thumbnail" width="150" alt="Main product image" />
+            {% endif %}
+          </div>
+
+          <!-- Multiple extra images upload -->
+          <div class="col-md-12 mb-3">
+            <label for="id_more_images" class="form-label">Additional Product Images</label>
+            <input type="file" name="more_images" id="id_more_images" class="form-control" multiple accept="image/*" />
+            <small class="form-text text-muted">Upload one or more additional images.</small>
+          </div>
+
+          <!-- Display existing additional images -->
+          {% if extra_images %}
+          <div class="col-md-12 mb-3">
+            <label class="form-label">Existing Additional Images</label>
+            <div class="d-flex flex-wrap gap-2">
+              {% for img in extra_images %}
+                <div class="position-relative" style="width: 120px;">
+                  <img src="{{ img.image.url }}" class="img-thumbnail" alt="Additional image" />
+                  {# Optional: Add delete button or preview features here #}
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
+        </div>
+
+        <div class="mt-3">
+          <button type="submit" class="btn btn-success px-4">
+            <i class="fas fa-save"></i> Update Product
+          </button>
+          <a href="{% url 'core:vendor_dashboard' %}" class="btn btn-secondary ms-2">Cancel</a>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

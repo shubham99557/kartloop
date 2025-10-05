@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Manage Products</h1>
+
+<table border="1" cellpadding="10">
+    <thead>
+        <tr>
+            <th>Image</th>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Brand</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for product in products %}
+        <tr>
+            <td><img src="{{ product.image.url }}" width="60"></td>
+            <td>{{ product.name }}</td>
+            <td>{{ product.category }}</td>
+            <td>{{ product.brand }}</td>
+            <td>
+                {% if product.offer_price %}
+                    <span style="color: gray; text-decoration: line-through;">₹{{ product.price }}</span><br>
+                    <strong style="color: green;">₹{{ product.offer_price }}</strong><br>
+                    <small style="color: orange;">({{ product.discount_percent }}% OFF)</small>
+                {% else %}
+                    ₹{{ product.price }}
+                {% endif %}
+            </td>
+            <td>{{ product.stock }}</td>
+            <td>
+                <a href="{% url 'dashboard:edit_product' product.id %}">Edit</a> |
+                <a href="#">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

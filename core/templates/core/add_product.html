@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+<style>
+  body {
+    background-color: #e0f2f1;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding: 20px 0;
+  }
+  .container-form {
+    max-width: 700px;
+    margin: auto;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  }
+  h2 {
+    color: #00796b;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 25px;
+  }
+  label {
+    font-weight: 600;
+    color: #004d40;
+  }
+  .teal-btn {
+    background-color: #00796b;
+    color: white;
+    border: none;
+  }
+  .teal-btn:hover {
+    background-color: #004d40;
+    color: white;
+  }
+</style>
+
+<div class="container-form">
+  <h2>Add New Product</h2>
+  <form method="POST" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+
+    <div class="mb-3">
+      <label for="id_name" class="form-label">Product Name</label>
+      <input type="text" id="id_name" name="name" class="form-control" placeholder="Enter product name" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="id_category" class="form-label">Category</label>
+      <select id="id_category" name="category" class="form-select" required>
+        <option value="" disabled selected>Select category</option>
+        {% for cat in categories %}
+          <option value="{{ cat.id }}">{{ cat.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="id_brand" class="form-label">Brand</label>
+      <input type="text" id="id_brand" name="brand" class="form-control" placeholder="Brand name" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="id_price" class="form-label">Price (₹)</label>
+      <input type="number" step="0.01" min="0" id="id_price" name="price" class="form-control" placeholder="Enter price" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="id_offer_price" class="form-label">Offer Price (₹)</label>
+      <input type="number" step="0.01" min="0" id="id_offer_price" name="offer_price" class="form-control" placeholder="Enter offer price (optional)">
+      <div class="form-text">Leave blank if no offer price.</div>
+    </div>
+
+    <div class="mb-3">
+      <label for="id_stock" class="form-label">Stock Quantity</label>
+      <input type="number" min="0" id="id_stock" name="stock" class="form-control" placeholder="Available stock" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="id_description" class="form-label">Description</label>
+      <textarea id="id_description" name="description" rows="5" class="form-control" placeholder="Enter product description" required></textarea>
+    </div>
+
+    <div class="mb-3">
+      <label for="id_more_images" class="form-label">Product Images</label>
+      <input type="file" id="id_more_images" name="more_images" class="form-control" multiple accept="image/*" required>
+      <div class="form-text">You can select multiple images.</div>
+    </div>
+
+    <button type="submit" class="btn teal-btn w-100 btn-lg">Add Product</button>
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

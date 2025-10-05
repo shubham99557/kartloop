@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Login - Kartloop{% endblock %}
+
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+  body {
+    background-color: #e0f2f1; /* Light teal background */
+  }
+  .login-card {
+    max-width: 400px;
+    margin: 60px auto;
+    padding: 30px;
+    border-radius: 10px;
+    background-color: white;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  }
+  .form-title {
+    text-align: center;
+    font-weight: bold;
+    color: #009688; /* Teal accent */
+    margin-bottom: 20px;
+  }
+  .form-check-label {
+    font-size: 0.9rem;
+    color: #555;
+  }
+  .error-message {
+    color: red;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+  }
+  .signup-link {
+    text-align: center;
+    margin-top: 20px;
+  }
+  .btn-primary {
+    background-color: #009688;
+    border: none;
+  }
+  .btn-primary:hover {
+    background-color: #00796b;
+  }
+  a {
+    color: #009688;
+    transition: color 0.2s ease;
+  }
+  a:hover {
+    color: #00796b;
+  }
+</style>
+
+<div class="login-card">
+  <h4 class="form-title">Login to Kartloop</h4>
+
+  {% if messages %}
+    {% for message in messages %}
+      <p class="error-message">{{ message }}</p>
+    {% endfor %}
+  {% endif %}
+
+  <form method="POST" novalidate>
+    {% csrf_token %}
+    <div class="mb-3">
+      <label for="username" class="form-label">Username</label>
+      <input type="text" name="username" class="form-control" required>
+    </div>
+
+    <div class="mb-2">
+      <label for="password" class="form-label">Password</label>
+      <input type="password" name="password" id="password" class="form-control" required>
+    </div>
+
+    <!-- Show/Hide password toggle -->
+    <div class="form-check mb-2">
+      <input class="form-check-input" type="checkbox" onclick="togglePassword()" id="showPass">
+      <label class="form-check-label" for="showPass">
+        Show Password
+      </label>
+    </div>
+
+    <!-- Remember me -->
+    <div class="form-check mb-3">
+      <input class="form-check-input" type="checkbox" name="remember" id="remember">
+      <label class="form-check-label" for="remember">
+        Stay logged in
+      </label>
+    </div>
+
+    <div class="d-grid mb-3">
+      <button type="submit" class="btn btn-primary">Login</button>
+    </div>
+
+    <!-- Forgot Password -->
+    <div class="text-center mb-2">
+      <a href="{% url 'users:password_reset' %}" class="text-decoration-none">Forgot Password?</a>
+    </div>
+  </form>
+
+  <!-- Sign Up Options -->
+  <div class="signup-link">
+    <p class="mb-1">New to Kartloop?</p>
+    <a href="{% url 'users:customer-signup' %}">Sign up as Customer</a> |
+    <a href="{% url 'users:seller-signup' %}">Sign up as Seller</a>
+  </div>
+</div>
+
+<script>
+  function togglePassword() {
+    const passwordField = document.getElementById("password");
+    passwordField.type = passwordField.type === "password" ? "text" : "password";
+  }
+</script>
+{% endblock %}

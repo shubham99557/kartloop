@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}Edit Profile - Kartloop{% endblock %}
+
+{% block content %}
+<style>
+  .teal-btn {
+    background-color: #008080;
+    border-color: #008080;
+    color: #fff;
+  }
+
+  .teal-btn:hover {
+    background-color: #006666;
+    border-color: #006666;
+    color: #fff;
+  }
+
+  .form-section-title {
+    color: #008080;
+    font-weight: 600;
+  }
+
+  @media (max-width: 576px) {
+    .form-section-title {
+      font-size: 1.1rem;
+    }
+  }
+</style>
+
+<div class="container mt-5">
+  <h2 class="mb-4 text-center text-teal">Edit Your Profile</h2>
+
+  <!-- Profile Edit Form -->
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+      <form method="POST" enctype="multipart/form-data" class="border p-4 rounded shadow-sm bg-white">
+        {% csrf_token %}
+
+        <!-- Account Info -->
+        <h5 class="form-section-title mb-3">Account Information</h5>
+        <div class="mb-3">
+          {{ user_form.as_p }}
+        </div>
+
+        <!-- Profile Info -->
+        <h5 class="form-section-title mt-4 mb-3">Profile Information</h5>
+        <div class="mb-3">
+          {{ profile_form.as_p }}
+        </div>
+
+        <!-- Buttons -->
+        <div class="mt-4 d-flex flex-column flex-sm-row gap-3">
+          <button type="submit" class="btn teal-btn w-100">
+            💾 Save Changes
+          </button>
+          <a href="{% url 'users:profile' %}" class="btn btn-secondary w-100">
+            ↩️ Cancel
+          </a>
+        </div>
+      </form>
+
+      <!-- Logout Button (POST Form) -->
+      <form method="POST" action="{% url 'users:logout' %}" class="mt-4 text-center">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline-danger">
+          🚪 Logout
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

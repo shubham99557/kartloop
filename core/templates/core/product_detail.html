@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.css" />
+<style>
+  .product-detail-container {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  }
+
+  .star { color: #00bfa5; }
+  .teal-btn {
+    background: #008080 !important;
+    color: #fff !important;
+  }
+  .teal-btn:disabled {
+    background: #b2dfdb !important;
+  }
+
+  .delivery-box {
+    background: #e0f2f1;
+    border: 1px solid #80cbc4;
+    border-radius: 6px;
+    padding: 10px 12px;
+  }
+
+  .review-user {
+    font-weight: 600;
+  }
+
+  .review-thumb {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+  }
+
+  .swiper {
+    border-radius: 8px;
+  }
+
+  .swiper-thumb img {
+    border: 2px solid #ccc;
+  }
+
+  .btn-warning {
+    background-color: #ffc107;
+    border: none;
+  }
+
+  .text-teal {
+    color: #008080;
+  }
+
+  .bg-teal {
+    background-color: #008080;
+  }
+</style>
+
+<div class="container my-4">
+  <div class="row product-detail-container">
+
+    <!-- Product Images -->
+    <div class="col-lg-5 mb-4">
+      <div class="bg-white p-3 border rounded shadow-sm">
+        <div class="swiper mainSwiper mb-2">
+          <div class="swiper-wrapper">
+            <div class="swiper-slide">
+              <img src="{{ product.image.url }}" class="img-fluid rounded w-100" alt="{{ product.name }}" loading="lazy">
+            </div>
+            {% for img in images %}
+              <div class="swiper-slide">
+                <img src="{{ img.image.url }}" class="img-fluid rounded w-100" alt="Product Image" loading="lazy">
+              </div>
+            {% endfor %}
+          </div>
+          <div class="swiper-button-next"></div>
+          <div class="swiper-button-prev"></div>
+          <div class="swiper-pagination"></div>
+        </div>
+
+        <div class="swiper thumbSwiper mt-2">
+          <div class="swiper-wrapper">
+            <div class="swiper-slide">
+              <img src="{{ product.image.url }}" class="img-thumbnail" alt="Thumbnail">
+            </div>
+            {% for img in images %}
+              <div class="swiper-slide">
+                <img src="{{ img.image.url }}" class="img-thumbnail" alt="Thumbnail">
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Product Details -->
+    <div class="col-lg-7">
+      <h2 class="fw-bold mb-2">{{ product.name }}</h2>
+
+      <div class="mb-2">
+        <span class="bg-teal text-light px-2 py-1 rounded fw-semibold me-2">
+          {{ product.average_rating|default:0|floatformat:1 }} <i class="bi bi-star-fill ms-1"></i>
+        </span>
+        <span class="text-muted small">({{ reviews|length }} reviews)</span>
+      </div>
+
+      <div class="mb-3 fs-3 text-success fw-bold">
+        {% if product.offer_price and product.offer_price < product.price %}
+          ₹{{ product.offer_price }}
+          <span class="fs-6 text-decoration-line-through text-secondary ms-2">₹{{ product.price }}</span>
+        {% else %}
+          ₹{{ product.price }}
+        {% endif %}
+      </div>
+
+      <div class="delivery-box mb-3">
+        <i class="bi bi-truck me-2"></i>Delivery by
+        <span class="text-teal fw-semibold">{{ expected_delivery|date:"D, d M Y" }}</span>
+      </div>
+
+      <p class="mb-2 fw-medium">
+        {% if product.stock > 0 %}
+          <span class="text-success">In stock ({{ product.stock }})</span>
+        {% else %}
+          <span class="text-danger">Out of stock</span>
+        {% endif %}
+      </p>
+
+      <p class="text-muted">{{ product.description }}</p>
+
+      <div class="row mt-4 g-2">
+        <div class="col-12 col-md-6">
+          <form method="POST" action="{% url 'core:add_to_cart' product.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn teal-btn w-100 btn-lg d-flex align-items-center justify-content-center gap-2 shadow-sm" {% if product.stock <= 0 %}disabled{% endif %}>
+              <i class="bi bi-cart-plus fs-5"></i> Add to Cart
+            </button>
+          </form>
+        </div>
+        <div class="col-12 col-md-6">
+          <form method="POST" action="{% url 'core:buy_now' product.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-warning w-100 btn-lg d-flex align-items-center justify-content-center gap-2 shadow-sm" {% if product.stock <= 0 %}disabled{% endif %}>
+              <i class="bi bi-lightning-fill fs-5"></i> Buy Now
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reviews -->
+  <div class="row mt-5">
+    <div class="col-lg-7">
+      <h4 class="mb-4 border-bottom pb-2">Ratings & Reviews</h4>
+
+      {% if user_review %}
+        <div class="card mb-3 shadow border border-info">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <span class="review-user">{{ user_review.user.username }} <span class="badge bg-info">Your review</span></span>
+              <span class="text-teal fw-bold"><i class="bi bi-star-fill"></i> {{ user_review.rating }}/5</span>
+            </div>
+            <p class="mt-2">{{ user_review.review }}</p>
+            {% if user_review.image %}
+              <img src="{{ user_review.image.url }}" class="img-thumbnail review-thumb mt-2" alt="Review Image">
+            {% endif %}
+            <small class="text-muted d-block">{{ user_review.created_at|date:"d M Y" }}</small>
+          </div>
+        </div>
+      {% endif %}
+
+      {% for r in reviews %}
+        <div class="card mb-3 shadow-sm">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <span class="review-user">{{ r.user.username }}</span>
+              <span class="text-teal fw-bold"><i class="bi bi-star-fill"></i> {{ r.rating }}/5</span>
+            </div>
+            <p class="mt-2">{{ r.review }}</p>
+            {% if r.image %}
+              <img src="{{ r.image.url }}" class="img-thumbnail review-thumb mt-2" alt="Review Image">
+            {% endif %}
+            <small class="text-muted d-block">{{ r.created_at|date:"d M Y" }}</small>
+          </div>
+        </div>
+      {% empty %}
+        <p class="text-muted">No reviews yet. Be the first to write one!</p>
+      {% endfor %}
+    </div>
+
+    <!-- Review Form -->
+    <div class="col-lg-5">
+      {% if user.is_authenticated %}
+        {% if not user_review %}
+          <div class="card shadow-sm mb-4">
+            <div class="card-body">
+              <h5 class="mb-3">Write a Review</h5>
+              <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="mb-3">
+                  <label class="form-label">Rating</label>
+                  <select name="rating" class="form-select w-auto" required>
+                    {% for i in "54321" %}
+                      <option value="{{ i }}">{{ i }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Review</label>
+                  <textarea name="review" class="form-control" rows="4" placeholder="Share your experience..." required></textarea>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Upload Image (optional)</label>
+                  <input type="file" name="image" class="form-control" accept="image/*">
+                </div>
+                <button type="submit" class="btn btn-success">Submit Review</button>
+              </form>
+            </div>
+          </div>
+        {% else %}
+          <div class="alert alert-info">You have already reviewed this product.</div>
+        {% endif %}
+      {% else %}
+        <div class="alert alert-warning">Please <a href="{% url 'users:login' %}">login</a> to write a review.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Related Products -->
+  {% if related_products %}
+    <hr class="my-5">
+    <h4 class="mb-3">Related Products</h4>
+    <div class="row">
+      {% for r in related_products %}
+        <div class="col-6 col-md-3 mb-4">
+          <div class="card h-100 shadow-sm">
+            <a href="{% url 'core:product_detail' r.id %}" class="text-decoration-none text-dark">
+              <img src="{{ r.image.url }}" class="card-img-top" alt="{{ r.name }}">
+              <div class="card-body">
+                <h6 class="card-title fw-bold text-truncate">{{ r.name }}</h6>
+                <p class="text-success fw-bold mb-0">₹{{ r.price }}</p>
+              </div>
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
+<script>
+  const thumbSwiper = new Swiper(".thumbSwiper", {
+    spaceBetween: 10,
+    slidesPerView: 4,
+    freeMode: true,
+    watchSlidesProgress: true,
+    breakpoints: {
+      0: { slidesPerView: 3 },
+      576: { slidesPerView: 4 }
+    }
+  });
+
+  const mainSwiper = new Swiper(".mainSwiper", {
+    loop: false,
+    spaceBetween: 10,
+    navigation: {
+      nextEl: ".swiper-button-next",
+      prevEl: ".swiper-button-prev",
+    },
+    pagination: {
+      el: ".swiper-pagination",
+      clickable: true,
+    },
+    thumbs: {
+      swiper: thumbSwiper,
+    },
+  });
+</script>
+{% endblock %}

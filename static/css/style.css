@@ -1,0 +1,241 @@
+/* =========================
+   ✅ NAVBAR & DROPDOWN
+========================= */
+
+.nav-item.dropdown {
+  position: relative;
+}
+
+.navbar-nav .dropdown-menu {
+  background: radial-gradient(white, #e0f7fa);
+  border-radius: 8px;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+  font-size: 15px;
+  border: none;
+  animation: fadeIn 0.25s ease-in-out;
+  z-index: 999;
+}
+
+.navbar-nav .dropdown-menu a {
+  padding: 10px 15px;
+  color: #333;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.navbar-nav .dropdown-menu a:hover {
+  background-color: #e3f2fd;
+  color: #009688;
+  font-weight: 600;
+}
+
+@media (min-width: 992px) {
+  .nav-item.dropdown:hover .dropdown-menu {
+    display: block;
+    margin-top: 0;
+  }
+}
+
+.navbar-brand {
+  font-weight: bold;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  color: #fff;
+  text-decoration: none;
+}
+
+.navbar-brand span {
+  color: #ff9800; /* New accent yellow-orange */
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================
+   ✅ CATEGORY SCROLL
+========================= */
+
+.category-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.category-scroll::-webkit-scrollbar-thumb {
+  background-color: #bbb;
+  border-radius: 10px;
+}
+
+.category-card {
+  transition: all 0.3s ease;
+  border: 1px solid #eaeaea;
+  background-color: #fff;
+}
+
+.category-card:hover {
+  transform: translateY(-4px);
+  background-color: #f9f9f9;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+}
+
+/* =========================
+   ✅ PAGINATION STYLE
+========================= */
+
+.pagination .page-link {
+  color: #009688;
+  font-weight: 500;
+  border: 1px solid #dee2e6;
+  transition: all 0.2s ease;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: #009688;
+  color: white;
+  border-color: #009688;
+}
+
+.pagination .page-link:hover {
+  background-color: #e0f2f1;
+  color: #00695c;
+}
+
+/* =========================
+   ✅ CUSTOM BANNER STYLING
+========================= */
+
+.custom-banner {
+  background: linear-gradient(90deg, #009688, #00796b);
+  color: white;
+  border-radius: 20px;
+  padding: 3rem 2rem;
+  box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.15);
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.custom-banner h2 {
+  font-weight: 700;
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.custom-banner p {
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+}
+
+.custom-banner .btn-warning {
+  background-color: #ff9800;
+  color: #212529;
+  border: none;
+  font-weight: 600;
+  padding: 0.6rem 1.5rem;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.custom-banner .btn-warning:hover {
+  background-color: #f57c00;
+  color: #fff;
+}
+
+/* =========================
+   ✅ CHATBOT STYLING
+========================= */
+
+.chatbot {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 300px;
+  max-height: 400px;
+  background: white;
+  border: 2px solid #009688;
+  border-radius: 10px;
+  overflow: hidden;
+  z-index: 9999;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+.chatbot-header {
+  background: #009688;
+  color: white;
+  padding: 10px;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: move;
+}
+
+.chatbot-body {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+  font-size: 14px;
+}
+
+.chatbot-input {
+  border-top: 1px solid #ddd;
+  border-radius: 0;
+}
+
+/* =========================
+   ✅ LOGO HOVER
+========================= */
+
+.logo-hover {
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+}
+
+.logo-hover:hover {
+  transform: scale(1.05);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* =========================
+   ✅ ADVANCED PRODUCT GRID
+========================= */
+
+.product-card img {
+  transition: transform 0.3s ease;
+}
+
+.product-card:hover img {
+  transform: scale(1.05);
+}
+
+.product-card .badge {
+  font-size: 0.75rem;
+  padding: 5px 10px;
+  border-radius: 20px;
+}
+
+.product-card .card-footer button {
+  transition: background-color 0.3s ease;
+}
+
+.product-card .card-footer button:hover {
+  background-color: #0d6efd;
+  color: white;
+}
+
+/* =========================
+   ✅ CATEGORY SECTION BACKGROUND
+========================= */
+
+.category-section {
+  background-color: #69404e; /* Light pink */
+}
