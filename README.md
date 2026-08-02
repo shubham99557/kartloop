@@ -198,7 +198,7 @@ It has been built using **Django** following modern web development practices wi
 
 ---
 
-## Checkout
+## Checkout Page
 
 ![](assets/checkout.png)
 
@@ -222,7 +222,7 @@ It has been built using **Django** following modern web development practices wi
 
 ---
 
-## Orders
+## Admin Page
 
 ![](assets/admin.png)
 
