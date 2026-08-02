@@ -222,6 +222,12 @@ It has been built using **Django** following modern web development practices wi
 
 ---
 
+## Orders
+
+![](assets/admin.png)
+
+---
+
 # 🚀 Installation
 
 Clone Repository
