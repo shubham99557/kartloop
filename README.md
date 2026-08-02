@@ -173,31 +173,6 @@ It has been built using **Django** following modern web development practices wi
 
 # 📸 Screenshots
 
-Create a folder named
-
-```
-assets/
-```
-
-and add screenshots with these names.
-
-```
-assets/
-│
-├── home.png
-├── login.png
-├── register.png
-├── products.png
-├── product-detail.png
-├── cart.png
-├── checkout.png
-├── dashboard.png
-├── orders.png
-├── reviews.png
-├── ai-assistant.png
-```
-
-Then GitHub will automatically display them.
 
 ## Home
 
