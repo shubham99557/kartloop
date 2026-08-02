@@ -20,15 +20,15 @@
         <tr>
             <td><img src="{{ product.image.url }}" width="60"></td>
             <td>{{ product.name }}</td>
-            <td>{{ product.category }}</td>
+            <td>{{ product.category.name }}</td>
             <td>{{ product.brand }}</td>
             <td>
-                {% if product.offer_price %}
-                    <span style="color: gray; text-decoration: line-through;">₹{{ product.price }}</span><br>
-                    <strong style="color: green;">₹{{ product.offer_price }}</strong><br>
+                {% if product.selling_price and product.selling_price < product.mrp_price %}
+                    <span style="color: gray; text-decoration: line-through;">₹{{ product.mrp_price }}</span><br>
+                    <strong style="color: green;">₹{{ product.selling_price }}</strong><br>
                     <small style="color: orange;">({{ product.discount_percent }}% OFF)</small>
                 {% else %}
-                    ₹{{ product.price }}
+                    ₹{{ product.mrp_price }}
                 {% endif %}
             </td>
             <td>{{ product.stock }}</td>

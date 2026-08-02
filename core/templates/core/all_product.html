@@ -4,119 +4,185 @@
 <head>
     <meta charset="UTF-8">
     <title>All Products - Kartloop</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f4f4;
+            background-color: #f1f3f6;
             margin: 0;
             padding: 20px;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1300px;
             margin: auto;
         }
 
         h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            color: #333;
+            margin-bottom: 10px;
+            color: #222;
+        }
+
+        .deal-title {
+            color: #d32f2f;
+            margin-bottom: 20px;
+            font-weight: 600;
         }
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 16px;
         }
 
         .card {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 0 8px rgba(0,0,0,0.1);
+            background-color: #fff;
+            border-radius: 6px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
             transition: transform 0.2s ease;
+            position: relative;
         }
 
         .card:hover {
-            transform: scale(1.02);
+            transform: translateY(-4px);
+        }
+
+        .discount-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background-color: #e53935;
+            color: white;
+            font-size: 0.75rem;
+            padding: 4px 6px;
+            border-radius: 4px;
+            font-weight: 600;
         }
 
         .card img {
             width: 100%;
             height: 200px;
-            object-fit: cover;
+            object-fit: contain;
+            background: #fafafa;
+            padding: 10px;
         }
 
         .card-content {
-            padding: 15px;
-            flex-grow: 1;
+            padding: 12px;
         }
 
         .card-content h3 {
-            margin: 0 0 10px;
-            font-size: 1.1rem;
-            color: #222;
+            font-size: 0.95rem;
+            margin: 0 0 6px;
+            color: #212121;
+            min-height: 40px;
         }
 
-        .card-content p {
-            margin: 0 0 8px;
-            font-size: 0.9rem;
-            color: #555;
+        .price-row {
+            margin-top: 6px;
         }
 
-        .price {
-            font-weight: bold;
-            color: #008000;
+        .selling-price {
+            font-weight: 700;
+            color: #212121;
+            font-size: 1rem;
+        }
+
+        .mrp {
+            text-decoration: line-through;
+            color: #777;
+            font-size: 0.85rem;
+            margin-left: 6px;
+        }
+
+        .offer-text {
+            color: #388e3c;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 4px;
         }
 
         .add-btn {
             margin-top: 10px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 4px;
-            cursor: pointer;
+            display: block;
             text-align: center;
+            background-color: #2874f0;
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
             text-decoration: none;
-            display: inline-block;
+            font-size: 0.9rem;
         }
 
         .add-btn:hover {
-            background-color: #0056b3;
+            background-color: #0b5ed7;
         }
 
         .empty-message {
             text-align: center;
-            color: #777;
-            margin-top: 50px;
+            color: #666;
+            margin-top: 60px;
+            font-size: 1.1rem;
         }
     </style>
 </head>
 <body>
+
 <div class="container">
+
     <h1>All Products</h1>
 
-    {% if products %}
+    {% if discount_filter %}
+        <div class="deal-title">
+            🔥 {{ discount_filter }}% or More Discount Deals
+        </div>
+    {% endif %}
+
+    {% if products.exists %}
         <div class="grid">
             {% for product in products %}
                 <div class="card">
+
+                    {% if product.discount_percent > 0 %}
+                        <div class="discount-badge">
+                            {{ product.discount_percent }}% OFF
+                        </div>
+                    {% endif %}
+
                     <img src="{{ product.image.url }}" alt="{{ product.name }}">
+
                     <div class="card-content">
-                        <h3>{{ product.name }}</h3>
-                        <p>{{ product.description|truncatewords:15 }}</p>
-                        <p class="price">₹{{ product.price }}</p>
-                        <a href="{% url 'add_to_cart' product.id %}" class="add-btn">Add to Cart</a>
+                        <h3>{{ product.name|truncatechars:45 }}</h3>
+
+                        <div class="price-row">
+                            <span class="selling-price">₹{{ product.selling_price }}</span>
+                            {% if product.selling_price < product.mrp_price %}
+                                <span class="mrp">₹{{ product.mrp_price }}</span>
+                            {% endif %}
+                        </div>
+
+                        {% if product.discount_percent > 0 %}
+                            <div class="offer-text">
+                                Save {{ product.discount_percent }}%
+                            </div>
+                        {% endif %}
+
+                        <a href="{% url 'core:product_detail' product.id %}" class="add-btn">
+                            View Details
+                        </a>
+
                     </div>
                 </div>
             {% endfor %}
         </div>
     {% else %}
-        <p class="empty-message">No products available right now. Please check back later.</p>
+        <p class="empty-message">
+            No products found for this deal 😔
+        </p>
     {% endif %}
+
 </div>
+
 </body>
 </html>

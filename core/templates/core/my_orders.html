@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container my-5">
+    <h2 class="mb-4 fw-bold">My Orders</h2>
+
+    {% if orders %}
+        {% for order in orders %}
+        <div class="card mb-4 shadow-sm border-0">
+
+            <!-- Order Header -->
+            <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap">
+                <div>
+                    <span class="fw-semibold">Order ID:</span> #{{ order.id }}<br>
+                    <span class="fw-semibold">Placed on:</span>
+                    {{ order.created_at|date:"F j, Y, g:i a" }}
+                </div>
+
+                <div class="mt-2 mt-md-0">
+                    <span class="badge rounded-pill
+                        {% if order.status == 'delivered' %}bg-success
+                        {% elif order.status == 'placed' %}bg-primary
+                        {% elif order.status == 'confirmed' %}bg-info text-dark
+                        {% elif order.status == 'shipped' %}bg-warning text-dark
+                        {% elif order.status == 'cancelled' %}bg-danger
+                        {% else %}bg-secondary{% endif %}">
+                        {{ order.status|capfirst }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Order Items -->
+            <div class="card-body bg-light">
+                <div class="row g-3">
+                    {% for item in order.items_list %}
+                    <div class="col-12 col-md-6 border-bottom pb-3 mb-3">
+                        <a href="{% url 'core:order_summary' order.id %}"
+                           class="text-decoration-none text-dark d-flex align-items-center">
+
+                            <div style="flex-shrink:0; width:100px; height:100px; overflow:hidden;">
+                                {% if item.product.image %}
+                                <img src="{{ item.product.image.url }}"
+                                     class="img-fluid rounded"
+                                     alt="{{ item.product.name }}">
+                                {% else %}
+                                <img src="{% static 'images/no-image.png' %}"
+                                     class="img-fluid rounded"
+                                     alt="No image">
+                                {% endif %}
+                            </div>
+
+                            <div class="ms-3 flex-grow-1">
+                                <h6 class="fw-bold mb-1">{{ item.product.name }}</h6>
+                                <p class="mb-1">Qty: {{ item.quantity }}</p>
+                                <p class="mb-0">Price: ₹{{ item.price|floatformat:2 }}</p>
+                            </div>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Order Summary -->
+                <div class="d-flex justify-content-end gap-4 mt-3 flex-wrap">
+                    <p class="mb-0">
+                        <strong>Subtotal:</strong>
+                        ₹{{ order.subtotal|floatformat:2 }}
+                    </p>
+
+                    <p class="mb-0">
+                        <strong>Delivery:</strong>
+                        ₹{{ order.delivery_method.cost|default:"0.00" }}
+                    </p>
+
+                    <p class="mb-0 fw-bold">
+                        <strong>Total:</strong>
+                        ₹{{ order.total_price|floatformat:2 }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Order Footer -->
+            <div class="card-footer bg-white d-flex justify-content-between align-items-center flex-wrap">
+
+                <!-- Shiprocket Tracking -->
+                {% if order.shipment_obj and order.shipment_obj.awb_code %}
+                <div class="mb-2 mb-md-0">
+                    <small class="text-muted d-block">
+                        Courier: {{ order.shipment_obj.courier_name }}
+                    </small>
+                    <a href="https://shiprocket.co/tracking/{{ order.shipment_obj.awb_code }}"
+                       target="_blank"
+                       class="btn btn-outline-success btn-sm mt-1">
+                        Track Order
+                    </a>
+                </div>
+                {% else %}
+                    <small class="text-muted">
+                        Tracking will be available once shipped
+                    </small>
+                {% endif %}
+
+                <!-- View Details -->
+                <a href="{% url 'core:order_summary' order.id %}"
+                   class="btn btn-primary btn-sm">
+                    View Details
+                </a>
+            </div>
+
+        </div>
+        {% endfor %}
+
+    {% else %}
+        <div class="text-center py-5">
+            <img src="{% static 'images/empty-orders.png' %}"
+                 alt="No Orders"
+                 class="mb-4"
+                 style="max-width:200px;">
+            <h5 class="mb-3">You have not placed any orders yet.</h5>
+            <a href="{% url 'core:home' %}" class="btn btn-primary btn-lg">
+                Shop Now
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

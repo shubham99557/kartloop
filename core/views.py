@@ -1,5 +1,7 @@
 import re
+from .forms import ProductForm, CheckoutForm, ReviewForm, ProductVariantFormSet
 import requests
+import json
 from django.conf import settings
 from django.utils.html import escape
 from rapidfuzz import fuzz, process
@@ -7,101 +9,213 @@ from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Sum, Max
+from django.db.models import Sum, Max, Avg, Q, F
+from django.db.models import Exists, OuterRef
 from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 from datetime import timedelta
 from django.db import IntegrityError
 from .models import (
-    Product, Vendor, CartItem, Order, OrderItem,
-    DeliveryMethod, Address, Review, ProductImage
+    Product, Vendor, CartItem, Order, OrderItem, HomeSection, ProductVariant,
+    DeliveryMethod, Address, Review, ProductImage, Category, Shipment, Banner, RecentlyViewedProduct
 )
-from .forms import ProductForm, CheckoutForm, ReviewForm
 from users.models import SellerProfile
-from shipping.utils import NimbusPostAPI
-from core.models import Shipment
+
+from .shiprocket import create_shiprocket_order
 
 
 # ------------------ Public Views ------------------
 def home(request):
-    return render(request, 'home.html')
+    # ------------------ CATEGORIES ------------------
+    categories = Category.objects.filter(is_active=True)
+
+    # ------------------ DEFAULT PRODUCTS (FALLBACK) ------------------
+    products = (
+        Product.objects
+        .filter(variants__stock__gt=0)
+        .distinct()
+        .order_by('-id')[:12]
+    )
 
 
-def home_view(request):
-    query = request.GET.get('q', '').strip()
-    category = request.GET.get('category', '').strip()
+    # ------------------ DYNAMIC BANNERS ------------------
+    now = timezone.localtime()
+    banners = Banner.objects.filter(
+        is_active=True
+    ).filter(
+        Q(start_date__lte=now) | Q(start_date__isnull=True),
+        Q(end_date__gte=now) | Q(end_date__isnull=True)
+    ).order_by('priority')
 
-    products = Product.objects.all()
+    # ------------------ RECENTLY VIEWED ------------------
+    recently_viewed_products = []
+    if request.user.is_authenticated:
+        recently_viewed_products = (
+            RecentlyViewedProduct.objects
+            .filter(user=request.user)
+            .select_related('product')
+            .order_by('-viewed_at')[:10]
+        )
 
-    if category:
-        products = products.filter(category__name__iexact=category)
+    # ================== 🔥 DYNAMIC HOME SECTIONS ==================
+    raw_sections = HomeSection.objects.filter(is_active=True).order_by('position')
+
+    home_sections = []
+
+    for section in raw_sections:
+        # 1️⃣ MANUAL PRODUCTS
+        if section.section_type == 'products':
+            items = section.products.filter(
+                variants__stock__gt=0
+            ).distinct()
 
 
-    if query:
-        name_id = [(p.name, p.id) for p in products]
-        matches = process.extract(query, name_id, scorer=fuzz.token_sort_ratio, limit=25)
-        ids = [pid for (name, pid), score, _ in matches if score >= 60]
-        products = products.filter(id__in=ids)
-    else:
-        products = products.order_by('-id')
+        # 2️⃣ CATEGORY BASED
+        elif section.section_type == 'category' and section.category:
+            items = (
+                Product.objects
+                .filter(
+                    category=section.category,
+                    variants__stock__gt=0
+                ).distinct()
 
-    paginator = Paginator(products, 8)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+                .order_by('-id')[:12]
+            )
 
-    return render(request, 'home.html', {'products': page_obj, 'page_obj': page_obj})
+        # 3️⃣ DISCOUNT BASED
+        elif section.section_type == 'discount' and section.min_discount:
+            items = (
+                Product.objects
+                .filter(
+                    discount_percent__gte=section.min_discount,
+                    variants__stock__gt=0
+                ).distinct()
+
+                .order_by('-discount_percent')[:12]
+            )
+
+        # 4️⃣ LATEST PRODUCTS
+        elif section.section_type == 'latest':
+            items = (
+                Product.objects
+                .filter(variants__stock__gt=0).distinct()
+                .order_by('-created_at')[:12]
+            )
+
+        else:
+            items = []
+
+        home_sections.append({
+            'title': section.title,
+            'slug': section.slug,
+            'items': items
+        })
+
+
+
+    # ================== RENDER ==================
+    return render(request, 'home.html', {
+        'categories': categories,
+        'products': products,
+        'banners': banners,
+        'recently_viewed_products': recently_viewed_products,
+        'home_sections': home_sections,
+    })
+
+
+
+
+#def home_view(request):
+#    query = request.GET.get('q', '').strip()
+#    category = request.GET.get('category', '').strip()
+#
+#    products = Product.objects.all()
+#
+#    if category:
+#        products = products.filter(category__name__iexact=category)
+#
+#
+#    if query:
+#        name_id = [(p.name, p.id) for p in products]
+#        matches = process.extract(query, name_id, scorer=fuzz.token_sort_ratio, limit=25)
+#        ids = [pid for (name, pid), score, _ in matches if score >= 60]
+#        products = products.filter(id__in=ids)
+#    else:
+#        products = products.order_by('-id')
+#
+#    paginator = Paginator(products, 8)
+#    page_number = request.GET.get('page')
+#    page_obj = paginator.get_page(page_number)
+#
+#    return render(request, 'home.html', {'products': page_obj, 'page_obj': page_obj})
 
 
 # ------------------ Search ------------------
-def highlight_query_in_text(text, query):
+def highlight_query(text, query):
+    """
+    Highlight all query words in a text.
+    """
     text_escaped = escape(text)
-    query_escaped = escape(query)
-    pattern = re.compile(re.escape(query_escaped), re.IGNORECASE)
-    return pattern.sub(lambda m: f'<mark>{m.group(0)}</mark>', text_escaped)
+    for word in query.split():
+        pattern = re.compile(re.escape(word), re.IGNORECASE)
+        text_escaped = pattern.sub(lambda m: f'<mark>{m.group(0)}</mark>', text_escaped)
+    return text_escaped
 
 
-def search_view(request):
+def advanced_search_view(request):
     query = request.GET.get('q', '').strip()
-    products = Product.objects.all()
+    category_slug = request.GET.get('category', '').strip()
 
+    products = Product.objects.annotate(
+        has_stock=Exists(
+            ProductVariant.objects.filter(product=OuterRef('pk'), stock__gt=0)
+        )
+    ).filter(has_stock=True)
+
+    # Optional category filter
+    if category_slug:
+        products = products.filter(category__slug=category_slug)
+
+    # Search filter
     if query:
-        name_to_id = {p.name: p.id for p in products}
-        matches = process.extract(query, name_to_id.keys(), scorer=fuzz.partial_token_sort_ratio, limit=25)
-        matched_names = [name for name, score, _ in matches if score >= 60]
-        matched_ids = [name_to_id[name] for name in matched_names]
+        products = products.filter(
+            Q(name__icontains=query) |
+            Q(description__icontains=query) |
+            Q(category__name__icontains=query) |
+            Q(vendor__user__username__icontains=query)
+        ).distinct()
 
-        if matched_ids:
-            products = products.filter(id__in=matched_ids).order_by('name')
-        else:
-            products = Product.objects.none()
-    else:
-        products = Product.objects.none()
-
+    # Pagination
     paginator = Paginator(products, 12)
-    page = request.GET.get('page')
-    paged_products = paginator.get_page(page)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
-    for product in paged_products:
-        product.highlighted_name = highlight_query_in_text(product.name, query) if query else escape(product.name)
+    # Highlight query in name & description
+    for product in page_obj:
+        product.highlighted_name = highlight_query(product.name, query)
+        product.highlighted_description = highlight_query(product.description or '', query)
 
-    return render(request, 'search_results.html', {'products': paged_products, 'query': query})
+    return render(request, 'search_results.html', {
+        'products': page_obj,
+        'query': query,
+        'page_obj': page_obj
+    })
 
 
-CATEGORY_SLUG_MAPPING = {
-    'men-s-wear': "men's wear",
-    'womens': "women's wear",
-    'kids': "kid's wear",
-}
 
+
+
+#----------------category--------------------
 
 def category_products_view(request, category_slug):
-    category_name = CATEGORY_SLUG_MAPPING.get(category_slug.lower())
-    if not category_name:
-        products = Product.objects.none()
-    else:
-        products = Product.objects.filter(category__name__iexact=category_name).order_by('-id')
+    category = get_object_or_404(Category, slug=category_slug, is_active=True)
 
+    products = Product.objects.annotate(
+        has_stock=Exists(
+            ProductVariant.objects.filter(product=OuterRef('pk'), stock__gt=0)
+        )
+    ).filter(category=category, has_stock=True).distinct().order_by('-id')
 
     paginator = Paginator(products, 12)
     page_number = request.GET.get('page')
@@ -110,85 +224,166 @@ def category_products_view(request, category_slug):
     return render(request, 'search_results.html', {
         'products': page_obj,
         'page_obj': page_obj,
-        'category': category_name.title(),
+        'category': category.name,
     })
 
 
+
 def all_products(request):
-    products = Product.objects.all()
-    return render(request, 'core/all_products.html', {'products': products})
+    products = Product.objects.annotate(
+        has_stock=Exists(
+            ProductVariant.objects.filter(product=OuterRef('pk'), stock__gt=0)
+        )
+    ).filter(has_stock=True).distinct()
+
+    # 🔥 DISCOUNT FILTER (FROM BANNER)
+    discount = request.GET.get('discount')
+    if discount:
+        products = products.filter(discount_percent__gte=int(discount))
+
+    # 🔹 OPTIONAL: category filter (future-ready)
+    category_slug = request.GET.get('category')
+    if category_slug:
+        products = products.filter(category__slug=category_slug)
+
+    context = {
+        'products': products,
+        'discount_filter': discount,
+    }
+    return render(request, 'core/all_products.html', context)
+
 
 
 def product_detail(request, pk):
     product = get_object_or_404(Product, pk=pk)
-    product.views += 1
-    product.save()
 
-    related = Product.objects.filter(category=product.category).exclude(id=product.id)[:4]
-
-    all_reviews = Review.objects.filter(product=product).order_by('-created_at')
-    user_review = all_reviews.filter(user=request.user).first() if request.user.is_authenticated else None
-
+    # ================== RECENTLY VIEWED (DB BASED) ==================
     if request.user.is_authenticated:
-        latest_reviews_ids = (
-            all_reviews.exclude(user=request.user)
-            .values('user')
-            .annotate(latest_id=Max('id'))
-            .values_list('latest_id', flat=True)
-        )
-    else:
-        latest_reviews_ids = (
-            all_reviews
-            .values('user')
-            .annotate(latest_id=Max('id'))
-            .values_list('latest_id', flat=True)
+        RecentlyViewedProduct.objects.update_or_create(
+            user=request.user,
+            product=product,
         )
 
-    reviews = Review.objects.filter(id__in=latest_reviews_ids).order_by('-created_at')
+        # Keep only last 10 viewed products
+        qs = RecentlyViewedProduct.objects.filter(user=request.user)
+        if qs.count() > 10:
+            qs.last().delete()
 
-    if request.method == 'POST' and request.user.is_authenticated:
+    # ================== INCREASE VIEWS ==================
+    product.views += 1
+    product.save(update_fields=['views'])
+
+    # ================== IMAGES ==================
+    images = ProductImage.objects.filter(product=product)
+
+    # ================== RELATED PRODUCTS ==================
+    related_products = (
+        Product.objects
+        .filter(category=product.category)
+        .exclude(id=product.id)[:4]
+    )
+
+    # ================== REVIEWS ==================
+    reviews = (
+        Review.objects
+        .filter(product=product)
+        .select_related('user')
+        .order_by('-created_at')
+    )
+
+    user_review = None
+    if request.user.is_authenticated:
+        user_review = Review.objects.filter(
+            product=product,
+            user=request.user
+        ).first()
+
+    # ================== HANDLE REVIEW SUBMISSION ==================
+    if request.method == 'POST':
+
+        if not request.user.is_authenticated:
+            messages.warning(request, "Please login to write a review.")
+            return redirect('users:login')
+
+        if user_review:
+            messages.info(request, "You have already reviewed this product.")
+            return redirect('core:product_detail', pk=product.pk)
+
         form = ReviewForm(request.POST, request.FILES)
         if form.is_valid():
-            if user_review:
-                messages.info(request, "You have already submitted a review for this product.")
-            else:
-                try:
-                    review = form.save(commit=False)
-                    review.product = product
-                    review.user = request.user
-                    review.save()
-                    messages.success(request, "Your review was submitted.")
-                    return redirect('core:product_detail', pk=product.pk)
-                except IntegrityError:
-                    messages.error(request, "You have already submitted a review for this product.")
+            review = form.save(commit=False)
+            review.product = product
+            review.user = request.user
+            review.save()
+
+            # Update average rating
+            avg_rating = Review.objects.filter(product=product).aggregate(
+                avg=Avg('rating')
+            )['avg'] or 0
+
+            product.average_rating = round(avg_rating, 1)
+            product.save(update_fields=['average_rating'])
+
+            messages.success(request, "Review submitted successfully.")
+            return redirect('core:product_detail', pk=product.pk)
     else:
         form = ReviewForm()
 
-    images = ProductImage.objects.filter(product=product)
+    # ================== VARIANTS (JSON SERIALIZABLE) ==================
+    # Only include id, size, stock for JS
+    variants_qs = product.variants.filter(stock__gt=0)
+    variants = list(variants_qs.values('id', 'size', 'stock'))
 
+    # ================== RENDER ==================
     return render(request, 'core/product_detail.html', {
         'product': product,
         'images': images,
-        'related_products': related,
         'reviews': reviews,
         'user_review': user_review,
-        'expected_delivery': timezone.now() + timedelta(days=product.delivery_days if hasattr(product, 'delivery_days') else 4),
+        'related_products': related_products,
+        'expected_delivery': timezone.now() + timedelta(days=4),
         'form': form,
+        'variants': variants,  # ✅ now JSON-serializable
     })
 
 
+
+
 # ------------------ Cart Views ------------------
+@login_required
 def add_to_cart(request, product_id):
     product = get_object_or_404(Product, id=product_id)
-    if request.user.is_authenticated:
-        cart_item, _ = CartItem.objects.get_or_create(user=request.user, product=product)
+
+    # ✅ Get variant ID from POST
+    variant_id = request.POST.get('variant_id')
+    if not variant_id:
+        messages.error(request, "Please select a size before adding to cart.")
+        return redirect('core:product_detail', pk=product.id)
+
+    variant = get_object_or_404(ProductVariant, id=variant_id, product=product)
+
+    # ✅ Check variant stock
+    if variant.stock <= 0:
+        messages.error(request, f"{variant.size} size of {product.name} is out of stock.")
+        return redirect('core:product_detail', pk=product.id)
+
+    # ✅ Get or create cart item
+    cart_item, created = CartItem.objects.get_or_create(
+        user=request.user,
+        product=product,
+        variant=variant
+    )
+
+    if cart_item.quantity < variant.stock:
         cart_item.quantity += 1
         cart_item.save()
+        messages.success(request, f"Added {variant.size} {product.name} to cart.")
     else:
-        cart = request.session.get('cart', {})
-        cart[str(product_id)] = cart.get(str(product_id), 0) + 1
-        request.session['cart'] = cart
+        messages.warning(request, f"Only {variant.stock} units of {variant.size} {product.name} available.")
+
     return redirect('core:view_cart')
+
+
 
 
 def view_cart(request):
@@ -197,7 +392,7 @@ def view_cart(request):
     else:
         items = CartItem.objects.filter(session_key=request.session.session_key)
 
-    total = sum(item.subtotal for item in items)
+    total = sum(item.unit_price * item.quantity for item in items)
 
     return render(request, 'core/cart.html', {'items': items, 'total': total})
 
@@ -211,58 +406,71 @@ def remove_from_cart(request, item_id):
 
 @require_POST
 def update_cart_quantity(request, item_id):
-    action = request.POST.get('action')
+    try:
+        data = json.loads(request.body)
+        action = data.get('action')
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'message': 'Invalid JSON'}, status=400)
 
     if request.user.is_authenticated:
         try:
             cart_item = CartItem.objects.get(id=item_id, user=request.user)
         except CartItem.DoesNotExist:
-            return JsonResponse({'error': 'Cart item not found'}, status=404)
+            return JsonResponse({'success': False, 'message': 'Cart item not found'}, status=404)
 
-        if action == 'increment' and cart_item.quantity < cart_item.product.stock:
+        variant_stock = cart_item.variant.stock
+
+
+        if action == 'increment' and cart_item.quantity < variant_stock:
             cart_item.quantity += 1
         elif action == 'decrement' and cart_item.quantity > 1:
             cart_item.quantity -= 1
+
         cart_item.save()
 
-        return JsonResponse({'success': True, 'new_quantity': cart_item.quantity, 'product_id': cart_item.product.id})
+        # 🔑 CALCULATIONS
+        subtotal = cart_item.unit_price * cart_item.quantity
+        cart_items = CartItem.objects.filter(user=request.user)
+        cart_total = sum(item.unit_price * item.quantity for item in cart_items)
 
-    else:
-        cart = request.session.get('cart', {})
-        product_id = str(item_id)
+        return JsonResponse({
+            'success': True,
+            'quantity': cart_item.quantity,
+            'subtotal': subtotal,
+            'cart_total': cart_total,
+        })
 
-        if product_id not in cart:
-            return JsonResponse({'error': 'Item not found in session cart'}, status=404)
+    return JsonResponse({'success': False, 'message': 'Unauthorized'}, status=401)
 
-        try:
-            product = Product.objects.get(id=product_id)
-        except Product.DoesNotExist:
-            return JsonResponse({'error': 'Product not found'}, status=404)
-
-        quantity = cart[product_id]
-
-        if action == 'increment' and quantity < product.stock:
-            quantity += 1
-        elif action == 'decrement':
-            quantity = max(1, quantity - 1)
-
-        cart[product_id] = quantity
-        request.session['cart'] = cart
-
-        return JsonResponse({'success': True, 'new_quantity': quantity, 'product_id': product_id})
 
 
 # ------------------ Checkout Views ------------------
 @login_required
 def checkout_view(request):
     cart_items = CartItem.objects.filter(user=request.user)
-    delivery_methods = DeliveryMethod.objects.all()
+
+    if not cart_items.exists():
+        messages.error(request, "Your cart is empty.")
+        return redirect('core:view_cart')
+
+    cart_subtotal = sum(item.unit_price * item.quantity for item in cart_items)
 
     if request.method == 'POST':
         form = CheckoutForm(request.POST, user=request.user)
         if form.is_valid():
-            # 1️⃣ Choose address (saved or new)
-            if form.cleaned_data['use_saved_address']:
+
+            # STOCK VALIDATION per variant
+            for item in cart_items:
+                available_stock = item.variant.stock if item.variant else item.product.stock
+                if item.quantity > available_stock:
+                    messages.error(
+                        request,
+                        f"Only {available_stock} units of {item.product.name} ({item.variant.size if item.variant else 'default'}) available."
+                    )
+                    return redirect('core:view_cart')
+
+            # ADDRESS
+            if form.cleaned_data.get('use_saved_address'):
                 selected_address = form.cleaned_data['saved_address']
             else:
                 selected_address = Address.objects.create(
@@ -277,106 +485,127 @@ def checkout_view(request):
                     country=form.cleaned_data['country']
                 )
 
-            # 2️⃣ Calculate totals
-            cart_total = sum(item.unit_price * item.quantity for item in cart_items)
             delivery_method = form.cleaned_data['delivery_method']
-            total_price = cart_total + delivery_method.cost
+            total_price = cart_subtotal + delivery_method.cost
 
-            # 3️⃣ Create the order in your DB
+            # CREATE ORDER
             order = Order.objects.create(
                 user=request.user,
                 address=selected_address,
                 delivery_method=delivery_method,
                 payment_method=form.cleaned_data['payment_method'],
-                total_price=total_price
+                total_price=total_price,
+                status='placed',
+                is_paid=(form.cleaned_data['payment_method'] != 'COD')
             )
 
+            # CREATE ORDER ITEMS + UPDATE STOCK
             for item in cart_items:
                 OrderItem.objects.create(
                     order=order,
                     product=item.product,
+                    variant=item.variant,
                     quantity=item.quantity,
                     price=item.unit_price
                 )
 
-            # 4️⃣ Create shipment in NimbusPost API
-            try:
-                nimbus_url = "https://app.nimbuspost.com/api/shipment/create"
-                headers = {
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {settings.NIMBUS_API_KEY}"
-                }
+                # Deduct variant stock
+                if item.variant:
+                    item.variant.stock -= item.quantity
+                    item.variant.save(update_fields=['stock'])
 
-                shipment_payload = {
-                    "order_number": str(order.id),
-                    "payment_type": "prepaid" if form.cleaned_data['payment_method'] == 'prepaid' else "cod",
-                    "shipping_charges": delivery_method.cost,
-                    "cod_charges": 0 if form.cleaned_data['payment_method'] == 'prepaid' else delivery_method.cost,
-                    "customer_name": selected_address.full_name,
-                    "customer_phone": selected_address.phone,
-                    "customer_email": request.user.email,
-                    "customer_address": f"{selected_address.address_line1}, {selected_address.address_line2}",
-                    "customer_city": selected_address.city,
-                    "customer_state": selected_address.state,
-                    "customer_pincode": selected_address.postal_code,
-                    "customer_country": selected_address.country,
-                    "products": [
-                        {
-                            "name": item.product.name,
-                            "sku": str(item.product.id),
-                            "quantity": item.quantity,
-                            "price": float(item.unit_price)
-                        }
-                        for item in cart_items
-                    ],
-                    "total": float(total_price)
-                }
 
-                response = requests.post(nimbus_url, json=shipment_payload, headers=headers)
+            # SHIPMENT
+            if settings.SHIPROCKET_ENABLED:
+                create_shiprocket_order(order)
+            else:
+                Shipment.objects.get_or_create(order=order, defaults={"status": "pending_kyc"})
 
-                if response.status_code != 200:
-                    print("NimbusPost Error:", response.text)
-
-            except Exception as e:
-                print("Shipment creation failed:", e)
-
-            # 5️⃣ Clear cart
+            # CLEAR CART
             cart_items.delete()
 
-            # 6️⃣ Redirect to order summary
+            messages.success(request, "Order placed successfully!")
             return redirect('core:order_summary', order_id=order.id)
+
     else:
         form = CheckoutForm(user=request.user)
 
     return render(request, 'core/checkout.html', {
         'cart_items': cart_items,
-        'delivery_methods': delivery_methods,
+        'cart_subtotal': cart_subtotal,
         'form': form,
     })
+
+
+
 
 
 @login_required
 def buy_now_view(request, product_id):
     product = get_object_or_404(Product, id=product_id)
-    if product.stock <= 0:
-        return redirect('core:product_detail', product_id=product.id)
+
+    # ✅ Get variant_id from POST
+    variant_id = request.POST.get('variant_id')
+    if not variant_id:
+        messages.error(request, "Please select a size before buying.")
+        return redirect('core:product_detail', pk=product.id)
+
+    variant = get_object_or_404(ProductVariant, id=variant_id, product=product)
+
+    # ✅ Check variant stock
+    if variant.stock <= 0:
+        messages.error(request, f"{variant.size} size of {product.name} is out of stock.")
+        return redirect('core:product_detail', pk=product.id)
+
+    # Clear existing cart and add this product
     CartItem.objects.filter(user=request.user).delete()
-    CartItem.objects.create(user=request.user, product=product, quantity=1)
+    CartItem.objects.create(user=request.user, product=product, variant=variant, quantity=1)
+
     return redirect('core:checkout')
+
+
+
 
 
 @login_required
 def order_summary_view(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
-    order_items = OrderItem.objects.filter(order=order)
-    return render(request, 'core/order_summary.html', {'order': order, 'order_items': order_items})
+
+    # Fetch order items
+    order_items = OrderItem.objects.filter(order=order).select_related('product')
+
+    # Calculate totals safely
+    subtotal = 0
+    for item in order_items:
+        subtotal += item.subtotal
+
+    delivery_cost = order.delivery_method.cost if order.delivery_method else 0
+    grand_total = subtotal + delivery_cost
+
+    # Attach shipment if exists (for future use)
+    shipment = None
+    try:
+        shipment = order.shipment
+    except:
+        shipment = None
+
+    return render(request, 'core/order_summary.html', {
+        'order': order,
+        'order_items': order_items,
+        'subtotal': subtotal,
+        'delivery_cost': delivery_cost,
+        'grand_total': grand_total,
+        'shipment': shipment,
+    })
+
+
 
 
 # ------------------ Vendor Views ------------------
 @login_required
 def vendor_dashboard(request):
     if not request.user.is_seller:
-        return redirect('home')
+        return redirect('core:home')
 
     vendor = get_object_or_404(Vendor, user=request.user)
     profile = SellerProfile.objects.filter(user=request.user).first()
@@ -408,41 +637,104 @@ def vendor_dashboard(request):
 @login_required
 def add_product(request):
     if not request.user.is_seller:
-        return redirect('home')
+        return redirect('core:home')
 
     vendor = Vendor.objects.get(user=request.user)
+
     if request.method == 'POST':
         form = ProductForm(request.POST, request.FILES)
-        if form.is_valid():
+        variant_formset = ProductVariantFormSet(request.POST)
+
+        if form.is_valid() and variant_formset.is_valid():
             product = form.save(commit=False)
             product.vendor = vendor
             product.save()
-            # Handle multiple image uploads from 'more_images' input field
+
+            # attach product to variants
+            variant_formset.instance = product
+            variant_formset.save()
+
+            # 🔑 update total stock automatically
+            product.stock = product.variants.aggregate(
+                total=Sum('stock')
+            )['total'] or 0
+            product.save(update_fields=['stock'])
+
+            # multiple images
             images = request.FILES.getlist('more_images')
             for img in images:
                 ProductImage.objects.create(product=product, image=img)
+
+            messages.success(request, "Product added successfully.")
             return redirect('core:vendor_dashboard')
     else:
         form = ProductForm()
+        variant_formset = ProductVariantFormSet()
 
-    return render(request, 'vendor/add_product.html', {'form': form})
+    return render(request, 'vendor/add_product.html', {
+        'form': form,
+        'variant_formset': variant_formset,
+    })
+
 
 
 @login_required
 def edit_product(request, product_id):
     product = get_object_or_404(Product, id=product_id, vendor=request.user.vendor)
+
     if request.method == 'POST':
         form = ProductForm(request.POST, request.FILES, instance=product)
-        if form.is_valid():
+        variant_formset = ProductVariantFormSet(request.POST, instance=product)
+
+        if form.is_valid() and variant_formset.is_valid():
             form.save()
-            # Handle multiple image uploads from 'more_images' input field
+            variant_formset.save()
+
+            # 🔑 recalculate stock
+            product.stock = product.variants.aggregate(
+                total=Sum('stock')
+            )['total'] or 0
+            product.save(update_fields=['stock'])
+
+            # extra images
             images = request.FILES.getlist('more_images')
             for img in images:
                 ProductImage.objects.create(product=product, image=img)
+
+            messages.success(request, "Product updated successfully.")
             return redirect('core:vendor_dashboard')
     else:
         form = ProductForm(instance=product)
-    return render(request, 'core/edit_product.html', {'form': form, 'product': product})
+        variant_formset = ProductVariantFormSet(instance=product)
+
+    return render(request, 'core/edit_product.html', {
+        'form': form,
+        'product': product,
+        'variant_formset': variant_formset,
+    })
+
+
+
+@login_required
+def my_orders_view(request):
+    orders = (
+        Order.objects
+        .filter(user=request.user)
+        .prefetch_related('items')
+        .select_related('shipment', 'delivery_method')
+        .order_by('-created_at')
+    )
+
+    for order in orders:
+        order.items_list = order.items.all()
+        order.num_items = sum(item.quantity for item in order.items_list)
+        order.subtotal = sum(item.price * item.quantity for item in order.items_list)
+        order.shipment_obj = getattr(order, 'shipment', None)
+
+    return render(request, 'core/my_orders.html', {'orders': orders})
+
+
+
 
 
 @login_required
@@ -452,3 +744,8 @@ def delete_product(request, product_id):
         product.delete()
         return redirect('core:vendor_dashboard')
     return render(request, 'core/confirm_delete.html', {'product': product})
+
+
+
+
+

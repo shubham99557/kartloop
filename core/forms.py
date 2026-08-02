@@ -1,5 +1,29 @@
 from django import forms
 from .models import Product, DeliveryMethod, Address, Order, Review, ProductImage
+from .models import Product, ProductVariant
+from django.forms import inlineformset_factory
+
+class ProductVariantForm(forms.ModelForm):
+    class Meta:
+        model = ProductVariant
+        fields = ['size', 'stock']
+        widgets = {
+            'size': forms.Select(attrs={'class': 'form-select'}),
+            'stock': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 0,
+                'placeholder': 'Available stock'
+            }),
+        }
+
+ProductVariantFormSet = inlineformset_factory(
+    Product,
+    ProductVariant,
+    form=ProductVariantForm,
+    extra=1,
+    can_delete=True
+)
+
 
 class ProductForm(forms.ModelForm):
     class Meta:
@@ -7,13 +31,24 @@ class ProductForm(forms.ModelForm):
         fields = [
             'name',
             'category',
-            'price',
-            'offer_price',  # ✅ new field added here
-            'stock',
+            'mrp_price',       # Original cost / MRP
+            'selling_price',   # Selling price for customers
             'brand',
             'description',
             'image'
         ]
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Product Name'}),
+            'category': forms.Select(attrs={'class': 'form-select'}),
+            'mrp_price': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'MRP Price'}),
+            'selling_price': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Selling Price'}),
+            'brand': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Brand Name'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Product Description', 'rows': 4}),
+            'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+        }
+
+    class Media:
+        js = ('js/product_discount_preview.js',)  # Optional: if you move the JS to separate file
 
 class ProductImageForm(forms.ModelForm):
     class Meta:

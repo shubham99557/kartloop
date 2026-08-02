@@ -1,284 +1,606 @@
 {% extends 'base.html' %}
 {% load static %}
+{% block seo_title %}
+{{ product.name }} at Best Price in India | Buy Online on Kartloop
+{% endblock %}
 
+{% block seo_description %}Buy {{ product.name }} online at best price on Kartloop. {% if product.selling_price %}Only ₹{{ product.selling_price }} with fast delivery & easy returns.{% else %}Available at ₹{{ product.mrp_price }} with fast delivery & easy returns.{% endif %}{% endblock %}
+
+
+{% block canonical_url %}
+{{ request.build_absolute_uri }}
+{% endblock %}
+
+{% block og_title %}
+{{ product.name }} | Kartloop
+{% endblock %}
+
+{% block og_description %}
+Check price, reviews & offers for {{ product.name }} on Kartloop.
+{% endblock %}
+
+{% block og_image %}
+{{ product.image.url }}
+{% endblock %}
+
+{% block robots_meta %}index, follow{% endblock %}
 {% block content %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.css" />
+
 <style>
-  .product-detail-container {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-  }
+.product-detail-container{
+  background:#fff;border-radius:12px;padding:20px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.05)
+}
+.bg-teal{background:#008080}
+.text-teal{color:#008080}
+.teal-btn{background:#008080;color:#fff}
+.teal-btn:disabled{background:#b2dfdb}
+.delivery-box{background:#e0f2f1;border:1px solid #80cbc4;border-radius:6px;padding:10px}
+.review-thumb{width:100px;height:100px;object-fit:cover}
+@media(min-width:992px){
+  .sticky-buy{position:sticky;bottom:15px;background:#fff;padding:10px;border-top:1px solid #ddd;z-index:10}
+}
 
-  .star { color: #00bfa5; }
-  .teal-btn {
-    background: #008080 !important;
-    color: #fff !important;
-  }
-  .teal-btn:disabled {
-    background: #b2dfdb !important;
-  }
+/* ================== RELATED PRODUCTS ================== */
+.related-swiper .swiper-slide {
+  width: auto; /* let Swiper handle width for partial slide */
+  flex-shrink: 0;
+}
+.related-swiper .card {
+  height: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.related-swiper .product-img {
+  max-height: 140px;
+  object-fit: contain;
+}
+.discount-badge-related {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  font-size: 0.65rem;
+  background-color: red;
+  color: #fff;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  z-index: 2;
+}
+/* ===============================
+   RELATED PRODUCTS – FLIPKART STYLE
+================================ */
+.related-wrapper {
+  position: relative;
+  margin-top: 1rem;
+}
 
-  .delivery-box {
-    background: #e0f2f1;
-    border: 1px solid #80cbc4;
-    border-radius: 6px;
-    padding: 10px 12px;
-  }
+/* TRACK */
+.related-track {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding-bottom: 0.5rem;
+}
+.related-track::-webkit-scrollbar { display: none; }
 
-  .review-user {
-    font-weight: 600;
-  }
+/* CARD */
+.related-card {
+  flex: 0 0 auto;
+  background: #fff;
+  border-radius: 10px;
+  padding: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  transition: transform 0.25s, box-shadow 0.25s;
+  position: relative;
+}
+.related-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0,128,128,0.2);
+}
 
-  .review-thumb {
-    width: 100px;
-    height: 100px;
-    object-fit: cover;
-  }
+/* IMAGE */
+.related-img-box {
+  position: relative;
+  height: 170px;
+  background: #f6f7f8;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.related-img-box img {
+  max-height: 150px;
+  width: 100%;
+  object-fit: contain;
+}
 
-  .swiper {
-    border-radius: 8px;
-  }
+/* DISCOUNT BADGE */
+.related-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  font-size: 0.7rem;
+  border-radius: 999px;
+  background-color: red;
+  color: #fff;
+  padding: 0.2rem 0.5rem;
+  z-index: 2;
+}
 
-  .swiper-thumb img {
-    border: 2px solid #ccc;
-  }
+/* TITLE & PRICE */
+.related-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-top: 8px;
+  min-height: 2.6rem;
+  text-align: center;
+}
+.related-price {
+  font-weight: 700;
+  color: #0d6efd;
+  margin-bottom: 0;
+  text-align: center;
+}
+.related-price small {
+  color: #777;
+  text-decoration: line-through;
+  margin-left: 4px;
+  font-weight: 500;
+}
 
-  .btn-warning {
-    background-color: #ffc107;
-    border: none;
-  }
+/* NAV BUTTONS */
+.related-nav {
+  position: absolute;
+  top: 40%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: #111;
+  color: #fff;
+  opacity: 0.85;
+  cursor: pointer;
+}
+.related-prev { left: -12px; }
+.related-next { right: -12px; }
 
-  .text-teal {
-    color: #008080;
-  }
+/* RESPONSIVE WIDTHS */
+/* DESKTOP: 5.5 cards */
+@media (min-width: 992px) { .related-card { width: calc((100% - (14px*5))/5.5); } }
+/* TABLET: 3.3 cards */
+@media (min-width: 576px) and (max-width: 991px) { .related-card { width: calc((100% - (14px*3))/3.3); } }
+/* MOBILE: 2.5 cards */
+@media (max-width: 575px) {
+  .related-card { width: calc((100% - 14px)/2.5); }
+  .related-nav { display: none; }
+}
 
-  .bg-teal {
-    background-color: #008080;
-  }
 </style>
 
-<div class="container my-4">
-  <div class="row product-detail-container">
+<div class="my-4">
 
-    <!-- Product Images -->
-    <div class="col-lg-5 mb-4">
-      <div class="bg-white p-3 border rounded shadow-sm">
-        <div class="swiper mainSwiper mb-2">
-          <div class="swiper-wrapper">
-            <div class="swiper-slide">
-              <img src="{{ product.image.url }}" class="img-fluid rounded w-100" alt="{{ product.name }}" loading="lazy">
-            </div>
-            {% for img in images %}
-              <div class="swiper-slide">
-                <img src="{{ img.image.url }}" class="img-fluid rounded w-100" alt="Product Image" loading="lazy">
-              </div>
-            {% endfor %}
-          </div>
-          <div class="swiper-button-next"></div>
-          <div class="swiper-button-prev"></div>
-          <div class="swiper-pagination"></div>
-        </div>
+<!-- ================= PRODUCT TOP ================= -->
+<div class="row product-detail-container">
 
-        <div class="swiper thumbSwiper mt-2">
-          <div class="swiper-wrapper">
-            <div class="swiper-slide">
-              <img src="{{ product.image.url }}" class="img-thumbnail" alt="Thumbnail">
-            </div>
-            {% for img in images %}
-              <div class="swiper-slide">
-                <img src="{{ img.image.url }}" class="img-thumbnail" alt="Thumbnail">
-              </div>
-            {% endfor %}
-          </div>
+<!-- IMAGES -->
+<div class="col-lg-5 mb-4">
+  <div class="border rounded p-3">
+    <div class="swiper mainSwiper mb-2">
+      <div class="swiper-wrapper">
+        <div class="swiper-slide">
+          <img src="{{ product.image.url }}"
+            class="img-fluid w-100 rounded"
+            alt="{{ product.name }} - Buy Online at Best Price">
         </div>
+        {% for img in images %}
+        <div class="swiper-slide">
+          <img src="{{ img.image.url }}" class="img-fluid w-100 rounded">
+        </div>
+        {% endfor %}
       </div>
+      <div class="swiper-button-next"></div>
+      <div class="swiper-button-prev"></div>
     </div>
 
-    <!-- Product Details -->
-    <div class="col-lg-7">
-      <h2 class="fw-bold mb-2">{{ product.name }}</h2>
-
-      <div class="mb-2">
-        <span class="bg-teal text-light px-2 py-1 rounded fw-semibold me-2">
-          {{ product.average_rating|default:0|floatformat:1 }} <i class="bi bi-star-fill ms-1"></i>
-        </span>
-        <span class="text-muted small">({{ reviews|length }} reviews)</span>
-      </div>
-
-      <div class="mb-3 fs-3 text-success fw-bold">
-        {% if product.offer_price and product.offer_price < product.price %}
-          ₹{{ product.offer_price }}
-          <span class="fs-6 text-decoration-line-through text-secondary ms-2">₹{{ product.price }}</span>
-        {% else %}
-          ₹{{ product.price }}
-        {% endif %}
-      </div>
-
-      <div class="delivery-box mb-3">
-        <i class="bi bi-truck me-2"></i>Delivery by
-        <span class="text-teal fw-semibold">{{ expected_delivery|date:"D, d M Y" }}</span>
-      </div>
-
-      <p class="mb-2 fw-medium">
-        {% if product.stock > 0 %}
-          <span class="text-success">In stock ({{ product.stock }})</span>
-        {% else %}
-          <span class="text-danger">Out of stock</span>
-        {% endif %}
-      </p>
-
-      <p class="text-muted">{{ product.description }}</p>
-
-      <div class="row mt-4 g-2">
-        <div class="col-12 col-md-6">
-          <form method="POST" action="{% url 'core:add_to_cart' product.id %}">
-            {% csrf_token %}
-            <button type="submit" class="btn teal-btn w-100 btn-lg d-flex align-items-center justify-content-center gap-2 shadow-sm" {% if product.stock <= 0 %}disabled{% endif %}>
-              <i class="bi bi-cart-plus fs-5"></i> Add to Cart
-            </button>
-          </form>
-        </div>
-        <div class="col-12 col-md-6">
-          <form method="POST" action="{% url 'core:buy_now' product.id %}">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-warning w-100 btn-lg d-flex align-items-center justify-content-center gap-2 shadow-sm" {% if product.stock <= 0 %}disabled{% endif %}>
-              <i class="bi bi-lightning-fill fs-5"></i> Buy Now
-            </button>
-          </form>
-        </div>
+    <div class="swiper thumbSwiper">
+      <div class="swiper-wrapper">
+        <div class="swiper-slide"><img src="{{ product.image.url }}" class="img-thumbnail"></div>
+        {% for img in images %}
+        <div class="swiper-slide"><img src="{{ img.image.url }}" class="img-thumbnail"></div>
+        {% endfor %}
       </div>
     </div>
   </div>
+</div>
 
-  <!-- Reviews -->
-  <div class="row mt-5">
-    <div class="col-lg-7">
-      <h4 class="mb-4 border-bottom pb-2">Ratings & Reviews</h4>
+<!-- DETAILS -->
+<div class="col-lg-7">
 
-      {% if user_review %}
-        <div class="card mb-3 shadow border border-info">
-          <div class="card-body">
-            <div class="d-flex justify-content-between">
-              <span class="review-user">{{ user_review.user.username }} <span class="badge bg-info">Your review</span></span>
-              <span class="text-teal fw-bold"><i class="bi bi-star-fill"></i> {{ user_review.rating }}/5</span>
-            </div>
-            <p class="mt-2">{{ user_review.review }}</p>
-            {% if user_review.image %}
-              <img src="{{ user_review.image.url }}" class="img-thumbnail review-thumb mt-2" alt="Review Image">
-            {% endif %}
-            <small class="text-muted d-block">{{ user_review.created_at|date:"d M Y" }}</small>
-          </div>
-        </div>
-      {% endif %}
+<h3 class="fw-bold">{{ product.name }}</h3>
 
-      {% for r in reviews %}
-        <div class="card mb-3 shadow-sm">
-          <div class="card-body">
-            <div class="d-flex justify-content-between">
-              <span class="review-user">{{ r.user.username }}</span>
-              <span class="text-teal fw-bold"><i class="bi bi-star-fill"></i> {{ r.rating }}/5</span>
-            </div>
-            <p class="mt-2">{{ r.review }}</p>
-            {% if r.image %}
-              <img src="{{ r.image.url }}" class="img-thumbnail review-thumb mt-2" alt="Review Image">
-            {% endif %}
-            <small class="text-muted d-block">{{ r.created_at|date:"d M Y" }}</small>
-          </div>
-        </div>
-      {% empty %}
-        <p class="text-muted">No reviews yet. Be the first to write one!</p>
-      {% endfor %}
-    </div>
+<!-- RATING -->
+<div class="mb-2">
+  <span class="bg-teal text-white px-2 py-1 rounded">
+    {{ product.average_rating|default:0|floatformat:1 }} ★
+  </span>
+  <small class="text-muted">({{ reviews|length }} ratings)</small>
+</div>
 
-    <!-- Review Form -->
-    <div class="col-lg-5">
-      {% if user.is_authenticated %}
-        {% if not user_review %}
-          <div class="card shadow-sm mb-4">
-            <div class="card-body">
-              <h5 class="mb-3">Write a Review</h5>
-              <form method="POST" enctype="multipart/form-data">
-                {% csrf_token %}
-                <div class="mb-3">
-                  <label class="form-label">Rating</label>
-                  <select name="rating" class="form-select w-auto" required>
-                    {% for i in "54321" %}
-                      <option value="{{ i }}">{{ i }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Review</label>
-                  <textarea name="review" class="form-control" rows="4" placeholder="Share your experience..." required></textarea>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Upload Image (optional)</label>
-                  <input type="file" name="image" class="form-control" accept="image/*">
-                </div>
-                <button type="submit" class="btn btn-success">Submit Review</button>
-              </form>
-            </div>
-          </div>
-        {% else %}
-          <div class="alert alert-info">You have already reviewed this product.</div>
-        {% endif %}
-      {% else %}
-        <div class="alert alert-warning">Please <a href="{% url 'users:login' %}">login</a> to write a review.</div>
-      {% endif %}
-    </div>
+<!-- PRICE -->
+<div class="mb-3">
+{% if product.selling_price and product.selling_price < product.mrp_price %}
+  <span class="fs-3 fw-bold text-success">₹{{ product.selling_price }}</span>
+  <span class="text-decoration-line-through text-muted ms-2">₹{{ product.mrp_price }}</span>
+  <span class="badge bg-danger ms-2">{{ product.discount_percent }}% OFF</span>
+{% else %}
+  <span class="fs-3 fw-bold">₹{{ product.mrp_price }}</span>
+{% endif %}
+</div>
+
+<!-- SELLER -->
+<div class="border rounded p-2 mb-3 bg-light">
+  <strong>Seller:</strong> {{ product.vendor.shop_name }}<br>
+  <small class="text-muted">7 Days Replacement Policy</small>
+</div>
+
+<!-- PINCODE -->
+<div class="mb-3">
+  <label class="fw-semibold">Delivery</label>
+  <div class="input-group">
+    <input type="text" id="pincode" class="form-control" placeholder="Enter Pincode">
+    <button class="btn btn-outline-success" onclick="checkPincode()">Check</button>
   </div>
+  <small id="delivery-result" class="text-success d-none"></small>
+</div>
 
-  <!-- Related Products -->
-  {% if related_products %}
-    <hr class="my-5">
-    <h4 class="mb-3">Related Products</h4>
-    <div class="row">
-      {% for r in related_products %}
-        <div class="col-6 col-md-3 mb-4">
-          <div class="card h-100 shadow-sm">
-            <a href="{% url 'core:product_detail' r.id %}" class="text-decoration-none text-dark">
-              <img src="{{ r.image.url }}" class="card-img-top" alt="{{ r.name }}">
-              <div class="card-body">
-                <h6 class="card-title fw-bold text-truncate">{{ r.name }}</h6>
-                <p class="text-success fw-bold mb-0">₹{{ r.price }}</p>
-              </div>
-            </a>
+<!-- STOCK -->
+<p id="stock-text" class="fw-semibold text-muted">
+  Select a size to see availability
+</p>
+
+<h6 class="mt-3">Size</h6>
+<div class="d-flex gap-2 flex-wrap" id="size-options">
+  {% for v in variants %}
+    <button
+        type="button"
+        class="btn btn-outline-secondary size-btn"
+        data-variant-id="{{ v.id }}"
+        data-stock="{{ v.stock }}"
+    >
+
+
+      {{ v.size }}
+    </button>
+  {% endfor %}
+</div>
+
+<!-- DESCRIPTION -->
+<h6 class="mt-3">Description</h6>
+<ul class="text-muted list-unstyled" id="description-list">
+  {% for line in product.description.splitlines %}
+    <li class="description-item">{{ line }}</li>
+  {% endfor %}
+</ul>
+<button class="btn btn-link p-0" id="toggle-description">More</button>
+
+<style>
+#description-list { max-height: 90px; overflow: hidden; transition: max-height 0.3s ease; }
+#description-list.expanded { max-height: 1000px; }
+</style>
+
+<script>
+const descList = document.getElementById("description-list");
+const toggleBtn = document.getElementById("toggle-description");
+toggleBtn.addEventListener("click", () => {
+  if(descList.classList.contains("expanded")){
+    descList.classList.remove("expanded");
+    toggleBtn.innerText = "More";
+  } else {
+    descList.classList.add("expanded");
+    toggleBtn.innerText = "Less";
+  }
+});
+</script>
+
+
+
+<input type="hidden" name="variant_id" id="selected-variant">
+
+<!-- BUTTONS -->
+<div class="row g-2 sticky-buy">
+  <div class="col-6">
+    <form method="POST" action="{% url 'core:add_to_cart' product.id %}">
+        {% csrf_token %}
+        <input type="hidden" name="variant_id" id="variant-input">
+
+      <button id="add-cart-btn" class="btn teal-btn w-100 btn-lg" disabled>
+        Add to Cart
+      </button>
+
+    </form>
+  </div>
+  <div class="col-6">
+    <form method="POST" action="{% url 'core:buy_now' product.id %}">
+        {% csrf_token %}
+        <input type="hidden" name="variant_id" id="variant-input-buy">
+
+        <button id="buy-now-btn" class="btn btn-warning w-100 btn-lg" disabled>
+            Buy Now
+        </button>
+    </form>
+
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ================= REVIEWS ================= -->
+<div class="row mt-5">
+<div class="col-lg-7">
+<h4 class="mb-3">Ratings & Reviews</h4>
+{% if user_review %}
+<div class="card mb-3 border-info">
+  <div class="card-body">
+    <strong>{{ user_review.user.username }}</strong>
+    <span class="badge bg-info ms-2">Your Review</span>
+    <span class="float-end text-success">{{ user_review.rating }} ★</span>
+    <p class="mt-2">{{ user_review.review }}</p>
+    {% if user_review.image %}
+    <img src="{{ user_review.image.url }}" class="review-thumb img-thumbnail">
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% for r in reviews %}
+<div class="card mb-3">
+  <div class="card-body">
+    <strong>{{ r.user.username }}</strong>
+    <span class="float-end text-success">{{ r.rating }} ★</span>
+    <p class="mt-2">{{ r.review }}</p>
+    {% if r.image %}
+    <img src="{{ r.image.url }}" class="review-thumb img-thumbnail">
+    {% endif %}
+  </div>
+</div>
+{% empty %}
+<p class="text-muted">No reviews yet.</p>
+{% endfor %}
+</div>
+
+<div class="col-lg-5">
+{% if user.is_authenticated %}
+  {% if not user_review %}
+    <div class="card">
+      <div class="card-body">
+        <h5>Write a Review</h5>
+        <form method="POST" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="mb-2">
+            <label>Rating</label>
+            <select name="rating" class="form-select" required>
+              <option value="">Select</option>
+              {% for i in "54321" %}
+                <option value="{{ i }}">{{ i }}</option>
+              {% endfor %}
+            </select>
           </div>
-        </div>
-      {% endfor %}
+          <div class="mb-2">
+            <textarea name="review" class="form-control" rows="3"
+              placeholder="Write your review" required></textarea>
+          </div>
+          <input type="file" name="image" class="form-control mb-2">
+          <button class="btn btn-success">Submit</button>
+        </form>
+      </div>
+    </div>
+  {% else %}
+    <div class="alert alert-info">
+      You have already reviewed this product.
     </div>
   {% endif %}
+{% else %}
+  <div class="alert alert-warning">
+    Please
+    <a href="{% url 'users:login' %}?next={{ request.path }}" class="fw-semibold">
+      login
+    </a>
+    to write a review.
+  </div>
+{% endif %}
+</div>
+</div>
+
+<!-- ================= RELATED ================= -->
+{% if related_products %}
+<hr>
+<h5 class="mb-3">Related Products</h5>
+
+<div class="related-wrapper">
+
+  <!-- LEFT -->
+  <button class="related-nav related-prev" id="related-prev">
+    <i class="bi bi-chevron-left"></i>
+  </button>
+
+  <!-- RIGHT -->
+  <button class="related-nav related-next" id="related-next">
+    <i class="bi bi-chevron-right"></i>
+  </button>
+
+  <!-- TRACK -->
+  <div class="related-track" id="related-products-wrapper">
+    {% for r in related_products|slice:":12" %}
+    <div class="related-card">
+      {% if r.selling_price and r.selling_price < r.mrp_price %}
+      <span class="related-badge">{{ r.discount_percent }}% OFF</span>
+      {% endif %}
+      <a href="{% url 'core:product_detail' r.id %}" class="text-decoration-none text-dark">
+
+        <div class="related-img-box">
+          {% if r.image %}
+            <img src="{{ r.image.url }}" alt="{{ r.name }}">
+          {% else %}
+            <img src="{% static 'images/default-product.png' %}" alt="{{ r.name }}">
+          {% endif %}
+        </div>
+
+        <h6 class="related-title">{{ r.name|truncatechars:42 }}</h6>
+
+        {% if r.selling_price and r.selling_price < r.mrp_price %}
+          <p class="related-price">₹{{ r.selling_price }} <small>₹{{ r.mrp_price }}</small></p>
+        {% else %}
+          <p class="related-price">₹{{ r.mrp_price }}</p>
+        {% endif %}
+
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+
+
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
 <script>
-  const thumbSwiper = new Swiper(".thumbSwiper", {
-    spaceBetween: 10,
+const thumbSwiper = new Swiper(".thumbSwiper", {
     slidesPerView: 4,
+    spaceBetween: 10,
     freeMode: true,
     watchSlidesProgress: true,
-    breakpoints: {
-      0: { slidesPerView: 3 },
-      576: { slidesPerView: 4 }
-    }
-  });
+});
 
-  const mainSwiper = new Swiper(".mainSwiper", {
-    loop: false,
+const mainSwiper = new Swiper(".mainSwiper", {
     spaceBetween: 10,
     navigation: {
-      nextEl: ".swiper-button-next",
-      prevEl: ".swiper-button-prev",
-    },
-    pagination: {
-      el: ".swiper-pagination",
-      clickable: true,
+        nextEl: ".swiper-button-next",
+        prevEl: ".swiper-button-prev",
     },
     thumbs: {
-      swiper: thumbSwiper,
+        swiper: thumbSwiper,
     },
-  });
+});
+
+
 </script>
+
+<script>
+function checkPincode(){
+ const pin=document.getElementById("pincode").value;
+ if(pin.length===6){
+  document.getElementById("delivery-result").innerText=
+   "Delivery by {{ expected_delivery|date:'d M Y' }} | COD Available";
+  document.getElementById("delivery-result").classList.remove("d-none");
+ }
+}
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  const sizeButtons = document.querySelectorAll('.size-btn');
+  const variantInput = document.getElementById('variant-input');
+  const variantInputBuy = document.getElementById('variant-input-buy');
+  const stockText = document.getElementById('stock-text');
+  const addCartBtn = document.getElementById('add-cart-btn');
+  const buyNowBtn = document.getElementById('buy-now-btn');
+
+  // Initial state
+  addCartBtn.disabled = true;
+  buyNowBtn.disabled = true;
+  stockText.innerText = 'Select a size to see availability';
+  stockText.className = 'fw-semibold text-muted';
+
+  sizeButtons.forEach(btn => {
+    btn.addEventListener('click', function () {
+
+      // Remove active state from all
+      sizeButtons.forEach(b => {
+        b.classList.remove('btn-success');
+        b.classList.add('btn-outline-secondary');
+      });
+
+      // Set active
+      this.classList.remove('btn-outline-secondary');
+      this.classList.add('btn-success');
+
+      const stock = parseInt(this.dataset.stock, 10);
+      const variantId = this.dataset.variantId;
+
+      // Set hidden inputs
+      variantInput.value = variantId;
+      variantInputBuy.value = variantId;
+
+      if (stock > 0) {
+        stockText.innerHTML = `In Stock <span class="text-muted">(${stock} left)</span>`;
+        stockText.className = 'fw-semibold text-success';
+
+        addCartBtn.disabled = false;
+        buyNowBtn.disabled = false;
+      } else {
+        stockText.innerHTML = 'Out of Stock';
+        stockText.className = 'fw-semibold text-danger';
+
+        addCartBtn.disabled = true;
+        buyNowBtn.disabled = true;
+      }
+    });
+  });
+
+});
+const relatedWrapper = document.getElementById('related-products-wrapper');
+const relatedPrev = document.getElementById('related-prev');
+const relatedNext = document.getElementById('related-next');
+
+if (relatedWrapper && relatedPrev && relatedNext) {
+  function getRelatedScrollStep() {
+    return relatedWrapper.clientWidth * 0.8;
+  }
+
+  relatedPrev.addEventListener('click', () => {
+    relatedWrapper.scrollBy({ left: -getRelatedScrollStep(), behavior: 'smooth' });
+  });
+
+  relatedNext.addEventListener('click', () => {
+    relatedWrapper.scrollBy({ left: getRelatedScrollStep(), behavior: 'smooth' });
+  });
+}
+
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org/",
+  "@type": "Product",
+  "name": "{{ product.name|escapejs }}",
+  "image": "{{ product.image.url }}",
+  "description": "{{ product.description|truncatechars:160|escapejs }}",
+  "brand": {
+    "@type": "Brand",
+    "name": "Kartloop"
+  },
+  "offers": {
+    "@type": "Offer",
+    "url": "{{ request.build_absolute_uri }}",
+    "priceCurrency": "INR",
+    "price": "{% if product.selling_price %}{{ product.selling_price }}{% else %}{{ product.mrp_price }}{% endif %}",
+    "availability": "{% if product.has_stock %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "{{ product.average_rating|default:'4.0' }}",
+    "reviewCount": "{{ reviews|length }}"
+  }
+}
+</script>
+
+
+
 {% endblock %}

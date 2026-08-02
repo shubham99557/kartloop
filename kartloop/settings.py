@@ -29,7 +29,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 SECRET_KEY = 'django-insecure-i4tjlb$ixx=535p6+n6*()9(t87(8g&xrx&szpsamwsy!e83-1'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False  # <-- set to True while developing to see errors
+DEBUG = True  # <-- set to True while developing to see errors
 
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost','kartloop7.pythonanywhere.com']
 
@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     'users',
     'core',
     'assistant',
@@ -119,7 +120,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kolkata'
 
 USE_I18N = True
 
@@ -144,8 +145,8 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = 'users:login'
-LOGIN_REDIRECT_URL = 'home'
-LOGOUT_REDIRECT_URL = 'home'
+LOGIN_REDIRECT_URL = 'core:home'
+LOGOUT_REDIRECT_URL = 'core:home'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
@@ -160,5 +161,10 @@ NIMBUSPOST_API_KEY = os.getenv("NIMBUSPOST_API_KEY")
 NIMBUSPOST_API_USER_EMAIL = os.getenv("NIMBUSPOST_API_USER_EMAIL")
 NIMBUSPOST_API_USER_PASSWORD = os.getenv("NIMBUSPOST_API_USER_PASSWORD")
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+SHIPROCKET_EMAIL = "singhshubham995577@gmail.com"
+SHIPROCKET_PASSWORD = "Y0Ky!uYcCf8#@LPv*Z129*PjGhn*mOqA"
+SHIPROCKET_ENABLED = False   # for now
+
+
 
 

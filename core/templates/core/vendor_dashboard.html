@@ -89,7 +89,7 @@
           <tr>
             <td><img src="{{ product.image.url }}" width="60" height="60" style="object-fit: cover;"></td>
             <td>{{ product.name }}</td>
-            <td>₹{{ product.price }}</td>
+            <td>₹{{ product.mrp_price }}</td>
             <td>{{ product.stock }}</td>
             <td>
               <a href="{% url 'core:edit_product' product.id %}" class="btn btn-sm btn-outline-primary me-1" title="Edit">

@@ -1,214 +1,308 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Home - Kartloop{% endblock %}
+{% block seo_title %}
+Online Shopping Site in India | Buy Mobiles, Fashion, Electronics – Kartloop
+{% endblock %}
+
+{% block seo_description %}
+Kartloop is India’s online shopping site for electronics, fashion, mobiles, home essentials & more. Best prices, fast delivery & easy returns.
+{% endblock %}
+
+{% block robots_meta %}index, follow{% endblock %}
+
+{% block canonical_url %}
+{{ request.build_absolute_uri }}
+{% endblock %}
+
+
 
 {% block content %}
 
 <!-- 🛍️ Shop by Category (Now Above Carousel, Flipkart-Style) -->
 <section class="container my-4">
   <div class="row g-3 justify-content-center">
-    <!-- Example categories with properly URL-encoded category query param -->
+
+    {% for category in categories %}
     <div class="col-4 col-sm-3 col-md-2">
-      <a href="{% url 'core:category_products' 'men-s-wear' %}" class="category-card shadow-sm rounded-3 d-flex flex-column align-items-center text-center text-decoration-none p-3 bg-white h-100">
-        <div class="category-img-bg mb-2" style="background: #e3f0fa;">
-          <img src="{% static 'images/men.jpg' %}" alt="Men's Wear" class="category-img">
+      <a href="{% url 'core:category_products' category.slug %}"
+         class="category-card shadow-sm rounded-3 d-flex flex-column align-items-center text-center text-decoration-none p-3 bg-white h-100">
+
+        <div class="category-img-bg mb-2" style="background:#f4f6f8;">
+          {% if category.image %}
+            <img src="{{ category.image.url }}" class="category-img" alt="{{ category.name }} online shopping">
+          {% else %}
+            <img src="{% static 'images/default-category.png' %}" class="category-img">
+          {% endif %}
         </div>
-        <div class="fw-semibold small text-dark mt-1">Men's Wear</div>
+
+        <div class="fw-semibold small text-dark mt-1">
+          {{ category.name }}
+        </div>
       </a>
     </div>
-    <div class="col-4 col-sm-3 col-md-2">
-      <a href="{% url 'core:category_products' 'womens' %}" class="category-card shadow-sm rounded-3 d-flex flex-column align-items-center text-center text-decoration-none p-3 bg-white h-100">
-        <div class="category-img-bg mb-2" style="background: #fdeaf4;">
-          <img src="{% static 'images/women.jpg' %}" alt="Women's Wear" class="category-img">
-        </div>
-        <div class="fw-semibold small text-dark mt-1">Women's Wear</div>
-      </a>
-    </div>
-    <div class="col-4 col-sm-3 col-md-2">
-      <a href="{% url 'core:category_products' 'kids' %}" class="category-card shadow-sm rounded-3 d-flex flex-column align-items-center text-center text-decoration-none p-3 bg-white h-100">
-        <div class="category-img-bg mb-2" style="background: #fff8df;">
-          <img src="{% static 'images/kids.jpg' %}" alt="Kids Wear" class="category-img">
-        </div>
-        <div class="fw-semibold small text-dark mt-1">Kids Wear</div>
-      </a>
-    </div>
-    <!-- Add more categories here as needed with correct URL encoding -->
+    {% endfor %}
+
   </div>
 </section>
 
-<!-- 🎯 Hero Carousel / Banner (Upgraded Look and Features) -->
-<div id="heroCarousel" class="carousel slide mb-5 shadow-lg rounded-4 overflow-hidden main-banner-section" data-bs-ride="carousel" data-bs-interval="5700" aria-label="Hero Banners Carousel">
-  <div class="carousel-indicators mb-0 pb-2">
-    <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" aria-label="Banner One" class="active"></button>
-    <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1" aria-label="Banner Two"></button>
-    <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2" aria-label="Banner Three"></button>
-  </div>
-  <div class="carousel-inner position-relative">
 
-    <!-- Slide 1 -->
-    <div class="carousel-item active">
-      <div class="d-flex flex-column flex-md-row align-items-center gap-3 position-relative banner-visual bg-primary text-white" style="min-height: 270px;">
-        <div class="col col-md-5 text-center d-none d-md-flex justify-content-center align-items-center">
-          <img src="{% static 'images/sale-electronics.png' %}" alt="Mega Deals" class="banner-img-graphic">
-        </div>
-        <div class="ps-3 py-2 col col-md-7">
-          <span class="badge bg-warning text-dark fs-6 mb-2 px-3 py-2 shadow">🔥 MEGA DEAL LIVE</span>
-          <h2 class="fw-bolder banner-main-title mb-2 animate-slide-in-up"><span class="banner-gradient-text">Up to <span style="font-size:2.4rem;">70% OFF</span></span></h2>
-          <p class="mb-2 fs-5 d-flex align-items-center banner-caption-desc">
-            <i class="bi bi-lightning-charge-fill me-2 fs-4 text-warning"></i>
-            Electronics, Fashion & Appliances!
-          </p>
-          <div class="banner-countdown d-inline-flex align-items-center px-3 py-1 rounded-pill shadow-sm me-3 mb-2 fs-6">
-            <i class="bi bi-alarm me-2 text-danger"></i>
-            Ends in: <span class="fw-bold ms-1">03:24:55</span>
-          </div>
-          <a href="{% url 'core:home' %}?category=deals" class="btn btn-warning px-4 py-2 fw-semibold rounded-pill ms-1">Shop Now <i class="bi bi-arrow-right ms-1"></i></a>
-        </div>
-        <div class="banner-decor-blob"></div>
-      </div>
-    </div>
+<!-- 🎯 Dynamic Banner Carousel -->
+{% if banners %}
+<section class="banner-fluid-wrapper">
+  <div id="bannerCarousel" class="carousel slide main-banner-section" data-bs-ride="carousel" data-bs-interval="4500">
 
-    <!-- Slide 2 -->
-    <div class="carousel-item">
-      <div class="d-flex flex-column flex-md-row-reverse align-items-center gap-3 position-relative banner-visual bg-gradient-success text-white" style="min-height:270px;">
-        <div class="col col-md-5 text-center d-none d-md-flex justify-content-center align-items-center">
-          <img src="{% static 'images/mobiles.png' %}" alt="Mobiles Offer" class="banner-img-graphic">
-        </div>
-        <div class="ps-3 py-2 col col-md-7">
-          <span class="badge bg-info fs-6 mb-2 px-3 py-2 text-dark shadow">🛒 FEATURED BRANDS</span>
-          <h2 class="fw-bolder banner-main-title mb-2 animate-slide-in-up text-success">
-            Festival Smart Picks&nbsp; <span class="badge bg-light text-success fw-bold fs-6 ms-1">TRENDING</span>
-          </h2>
-          <p class="mb-2 fs-5"><i class="bi bi-phone-fill me-2 fs-4"></i>Get the Latest Mobiles </p>
-          <div class="d-inline-block px-3 py-1 banner-best-seller text-white fs-6 rounded-pill shadow-sm me-2 mb-2">
-            <i class="bi bi-star-fill text-warning"></i> Top Rated
-          </div>
-          <a href="{% url 'core:home' %}?category=electronics" class="btn btn-light text-success px-4 py-2 fw-semibold rounded-pill shadow-sm">Explore</a>
-        </div>
-        <div class="banner-decor-blob" style="background: radial-gradient(ellipse at 60% 60%, #33f8ec30 80%, transparent);"></div>
-      </div>
-    </div>
-
-    <!-- Slide 3 -->
-    <div class="carousel-item">
-      <div class="d-flex flex-column flex-md-row align-items-center gap-3 position-relative banner-visual bg-warning text-dark" style="min-height:270px;">
-        <div class="col col-md-5 text-center d-none d-md-flex justify-content-center align-items-center">
-          <img src="{% static 'images/fashion.png' %}" alt="Fashion Fiesta" class="banner-img-graphic">
-        </div>
-        <div class="ps-3 py-2 col col-md-7">
-          <span class="badge bg-danger text-white fs-6 mb-2 px-3 py-2 shadow">👗 NEW LAUNCHES</span>
-          <h2 class="fw-bolder banner-main-title mb-2 animate-slide-in-up">Trendy Styles <span style="color:#fd3e81">from ₹199</span></h2>
-          <p class="mb-2 fs-5"><i class="bi bi-bag-heart-fill me-2 fs-4" style="color:#fd3e81"></i>Men, Women & Kids Wear</p>
-          <span class="d-inline-block px-3 py-1 text-white bg-teal rounded-pill banner-hit-offer shadow-sm mb-2">Biggest Sale of the Season</span>
-          <a href="{% url 'core:home' %}?category=fashion" class="btn btn-dark px-4 py-2 fw-semibold rounded-pill ms-1">Grab Now</a>
-        </div>
-        <div class="banner-decor-blob" style="background: radial-gradient(ellipse at 30% 70%, #fd3e8160 74%, transparent);"></div>
-      </div>
-    </div>
-  </div>
-  <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev" aria-label="Previous slide">
-    <span class="carousel-control-prev-icon bg-dark rounded-circle shadow"></span>
-  </button>
-  <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next" aria-label="Next slide">
-    <span class="carousel-control-next-icon bg-dark rounded-circle shadow"></span>
-  </button>
-</div>
-
-<!-- 🔥 Top Gadget Picks Section -->
-<section class="container mb-5">
-  <div class="top-gadget-section rounded-3 position-relative overflow-hidden d-flex flex-column flex-md-row align-items-center justify-content-between px-4 py-4" style="background: linear-gradient(120deg, #ebfaff 55%, #ffe4e1 100%); box-shadow: 0 6px 24px #19376d18;">
-    <div class="col-md-7">
-      <h2 class="fw-bold mb-2 text-teal" style="font-size: 2.2rem;">
-        <span style="color:#008080;">Get Top</span> <span style="color:#FD3E81;">Gadgets</span>
-      </h2>
-      <p class="lead mb-4" style="color:#524b61;">
-        Explore the coolest smartwatches, wireless earphones, speakers, and must-have gadget gifts.<br>
-        <span style="font-weight: 600; color:#FD3E81;">Special Offers up to 40% OFF this week!</span>
-      </p>
-      <div class="d-flex gap-3 flex-wrap">
-        <a href="{% url 'core:all_products' %}?category=gadgets" class="btn btn-lg btn-teal fw-semibold shadow-sm rounded-pill px-4">
-          Shop Gadgets
-        </a>
-        <a href="{% url 'core:search' %}?q=wireless" class="btn btn-outline-dark btn-lg rounded-pill px-4">
-          Wireless Specials
-        </a>
-      </div>
-    </div>
-    <div class="col-md-5 d-flex justify-content-center align-items-center mt-4 mt-md-0">
-      <img src="{% static 'images/gadget.jpg' %}" alt="Top Gadget Picks" class="gadget-hero-img rounded-2 shadow" style="max-width: 330px; width: 100%; height: auto; background: #fff2fa;">
-    </div>
-    <div class="decor-gadget-bg1"></div>
-    <div class="decor-gadget-bg2"></div>
-  </div>
-</section>
-
-<!-- 🛍️ All Products Section -->
-<section class="container my-5">
-  <h4 class="fw-bold mb-4 text-teal">All Products</h4>
-  {% if products %}
-    <div class="row g-4">
-      {% for product in products %}
-        <div class="col-6 col-md-4 col-lg-3">
-          <div class="card product-card h-100 shadow-sm border-0 rounded-3 position-relative overflow-hidden" style="transition: transform 0.3s ease, box-shadow 0.3s ease;">
-            <a href="{% url 'core:product_detail' product.id %}" class="text-decoration-none text-dark d-block h-100">
-              <div class="position-relative" style="min-height: 280px; display:flex; align-items:center; justify-content:center;">
-                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="card-img-top p-3" style="max-height: 260px; object-fit: contain; transition: transform 0.3s ease;">
-                {% if product.offer_price and product.offer_price < product.price %}
-                  <span class="badge bg-danger position-absolute top-0 start-0 m-2 rounded-pill shadow-lg">
-                    {{ product.discount_percent }}% OFF
-                  </span>
-                {% endif %}
-              </div>
-              <div class="card-body text-center px-3">
-                <h6 class="card-title mb-2 fw-semibold" style="min-height: 3rem; line-height: 1.1;">{{ product.name|truncatechars:45 }}</h6>
-                <div class="d-flex justify-content-center align-items-center gap-2">
-                  {% if product.offer_price and product.offer_price < product.price %}
-                    <p class="text-primary fw-bold mb-0 fs-5">₹{{ product.offer_price }}</p>
-                    <small class="text-muted text-decoration-line-through fs-6">₹{{ product.price }}</small>
-                  {% else %}
-                    <p class="text-primary fw-bold mb-0 fs-5">₹{{ product.price }}</p>
-                  {% endif %}
-                </div>
-              </div>
-            </a>
-            <form method="POST" action="{% url 'core:add_to_cart' product.id %}" class="card-footer bg-white border-0 text-center p-2">
-              {% csrf_token %}
-              <button type="submit" class="btn btn-success btn-sm w-100 fw-semibold">
-                <i class="bi bi-cart-plus me-1"></i> Add to Cart
-              </button>
-            </form>
-          </div>
-        </div>
+    <!-- Indicators -->
+    <div class="carousel-indicators">
+      {% for banner in banners %}
+      <button type="button"
+              data-bs-target="#bannerCarousel"
+              data-bs-slide-to="{{ forloop.counter0 }}"
+              class="{% if forloop.first %}active{% endif %}">
+      </button>
       {% endfor %}
     </div>
-    {% if products.has_other_pages %}
-      <nav class="mt-5" aria-label="Product pagination">
-        <ul class="pagination justify-content-center flex-wrap gap-1">
-          {% if products.has_previous %}
-            <li class="page-item">
-              <a class="page-link" href="?page={{ products.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" aria-label="Previous page">«</a>
-            </li>
-          {% endif %}
-          {% for page_num in products.paginator.page_range %}
-            <li class="page-item {% if page_num == products.number %}active{% endif %}">
-              <a class="page-link" href="?page={{ page_num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}">{{ page_num }}</a>
-            </li>
-          {% endfor %}
-          {% if products.has_next %}
-            <li class="page-item">
-              <a class="page-link" href="?page={{ products.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" aria-label="Next page">»</a>
-            </li>
-          {% endif %}
-        </ul>
-      </nav>
-    {% endif %}
-  {% else %}
-    <p class="text-center text-muted fs-5">No products found.</p>
-  {% endif %}
+
+    <div class="carousel-inner">
+      {% for banner in banners %}
+      <div class="carousel-item {% if forloop.first %}active{% endif %}">
+        <div class="banner-visual banner-{{ banner.theme }}">
+
+          <!-- TEXT -->
+          <div class="banner-text">
+            <span class="badge banner-best-seller">
+              🔥 Limited Time Offer
+            </span>
+
+            <h2 class="banner-main-title">
+              {{ banner.title }}
+            </h2>
+
+            {% if banner.subtitle %}
+            <p class="banner-caption-desc">
+              {{ banner.subtitle }}
+            </p>
+            {% endif %}
+
+            <a href="{{ banner.redirect_url|default:'#' }}"
+               class="btn btn-light btn-lg rounded-pill fw-semibold px-4">
+              Shop Now →
+            </a>
+          </div>
+
+          <!-- IMAGE -->
+          <div class="banner-image-wrap">
+            <img src="{{ banner.image.url }}"
+                 class="banner-img-graphic"
+                 alt="{{ banner.title }}">
+          </div>
+
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Controls -->
+    <button class="carousel-control-prev" type="button" data-bs-target="#bannerCarousel" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon"></span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#bannerCarousel" data-bs-slide="next">
+      <span class="carousel-control-next-icon"></span>
+    </button>
+
+  </div>
 </section>
+{% endif %}
+
+
+{% for section in home_sections %}
+<section class="container my-5">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold text-teal">{{ section.title }}</h4>
+
+    <a href="{% url 'core:all_products' %}?section={{ section.slug }}"
+       class="fw-semibold text-primary">
+      View All
+    </a>
+  </div>
+
+  <div class="rv-wrapper position-relative">
+
+    <!-- LEFT BUTTON -->
+    <button class="rv-nav rv-prev" id="prev-{{ forloop.counter }}">
+      <i class="bi bi-chevron-left"></i>
+    </button>
+
+    <!-- RIGHT BUTTON -->
+    <button class="rv-nav rv-next" id="next-{{ forloop.counter }}">
+      <i class="bi bi-chevron-right"></i>
+    </button>
+
+    <div class="rv-track" id="track-{{ forloop.counter }}">
+      {% for product in section.items %}
+      <div class="rv-card">
+        <a href="{% url 'core:product_detail' product.id %}" class="text-decoration-none text-dark">
+
+          <div class="rv-img-box">
+            {% if product.image %}
+              <img src="{{ product.image.url }}" alt="{{ product.name }}">
+            {% else %}
+              <img src="{% static 'images/default-product.png' %}" alt="{{ product.name }}">
+            {% endif %}
+
+            {% if product.selling_price and product.selling_price < product.mrp_price %}
+              <span class="badge bg-danger rv-badge">{{ product.discount_percent }}% OFF</span>
+            {% endif %}
+          </div>
+
+          <h6 class="rv-title">{{ product.name|truncatechars:42 }}</h6>
+
+          {% if product.selling_price and product.selling_price < product.mrp_price %}
+            <p class="rv-price">₹{{ product.selling_price }} <small>₹{{ product.mrp_price }}</small></p>
+          {% else %}
+            <p class="rv-price">₹{{ product.mrp_price }}</p>
+          {% endif %}
+
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+</section>
+{% endfor %}
+
+
+
+<!-- Recently viewed section -->
+{% if recently_viewed_products %}
+<section class="container my-5">
+  <h4 class="fw-bold mb-3 text-teal">Recently Viewed</h4>
+
+  <div class="recently-viewed-wrapper position-relative">
+
+    <!-- LEFT -->
+    <button class="rv-nav rv-prev" id="recent-prev">
+      <i class="bi bi-chevron-left"></i>
+    </button>
+
+    <!-- RIGHT -->
+    <button class="rv-nav rv-next" id="recent-next">
+      <i class="bi bi-chevron-right"></i>
+    </button>
+
+    <!-- TRACK -->
+    <div class="recently-viewed-track" id="recent-products-wrapper">
+
+      {% for rv in recently_viewed_products|slice:":15" %}
+      {% with product=rv.product %}
+      <div class="rv-card">
+        <a href="{% url 'core:product_detail' product.id %}" class="text-decoration-none text-dark">
+
+          <div class="rv-img-box">
+            <img src="{{ product.image.url }}" alt="{{ product.name }}">
+            {% if product.selling_price and product.selling_price < product.mrp_price %}
+              <span class="badge bg-danger rv-badge">
+                {{ product.discount_percent }}% OFF
+              </span>
+            {% endif %}
+          </div>
+
+          <h6 class="rv-title">
+            {{ product.name|truncatechars:42 }}
+          </h6>
+
+          {% if product.selling_price and product.selling_price < product.mrp_price %}
+            <p class="rv-price">
+              ₹{{ product.selling_price }}
+              <small>₹{{ product.mrp_price }}</small>
+            </p>
+          {% else %}
+            <p class="rv-price">₹{{ product.mrp_price }}</p>
+          {% endif %}
+
+        </a>
+      </div>
+      {% endwith %}
+      {% endfor %}
+
+    </div>
+  </div>
+</section>
+{% endif %}
+
+
+
+{% if products %}
+<section class="container my-5">
+  <h4 class="fw-bold mb-3 text-teal">All Products</h4>
+
+  <div class="recently-viewed-wrapper position-relative">
+
+    <!-- LEFT -->
+    <button class="rv-nav rv-prev" id="all-prev">
+      <i class="bi bi-chevron-left"></i>
+    </button>
+
+    <!-- RIGHT -->
+    <button class="rv-nav rv-next" id="all-next">
+      <i class="bi bi-chevron-right"></i>
+    </button>
+
+    <!-- TRACK -->
+    <div class="recently-viewed-track" id="all-products-wrapper">
+
+      {% for product in products|slice:":12" %}
+      <div class="rv-card">
+        <a href="{% url 'core:product_detail' product.id %}" class="text-decoration-none text-dark">
+
+          <div class="rv-img-box">
+            <img src="{{ product.image.url }}" alt="{{ product.name }}">
+
+            {% if product.selling_price and product.selling_price < product.mrp_price %}
+              <span class="badge bg-danger rv-badge">
+                {{ product.discount_percent }}% OFF
+              </span>
+            {% endif %}
+          </div>
+
+          <h6 class="rv-title">
+            {{ product.name|truncatechars:42 }}
+          </h6>
+
+          {% if product.selling_price and product.selling_price < product.mrp_price %}
+            <p class="rv-price">
+              ₹{{ product.selling_price }}
+              <small>₹{{ product.mrp_price }}</small>
+            </p>
+          {% else %}
+            <p class="rv-price">₹{{ product.mrp_price }}</p>
+          {% endif %}
+        </a>
+      </div>
+      {% endfor %}
+
+    </div>
+  </div>
+</section>
+{% endif %}
+
 
 <style>
+@media (max-width: 575px) {
+  .rv-nav {
+    display: none;
+  }
+}
+
+#recent-prev {
+  left: -10px;
+}
+#recent-next {
+  right: -10px;
+}
+
   /* Flipkart-style Category Section */
   .category-card {
     border: 1px solid #eee;
@@ -257,258 +351,460 @@
     }
   }
 
-  /* ---- MODERNIZED BANNER ---- */
-  .main-banner-section {
-    border-radius: 1.5rem;
-    overflow: hidden;
-    box-shadow: 0 10px 32px #00808015, 0 2px 8px #0080800c,
-      0 1.5px 7px #1b103418 !important;
-  }
-  /* Slides backgrounds */
-  .bg-gradient-success {
-    background: linear-gradient(120deg, #21d4fd 0%, #36ceb6 90%);
-    color: #fff;
-  }
+/* ===============================
+   WRAPPER
+================================ */
+.banner-fluid-wrapper {
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.main-banner-section {
+  width: 100%;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
+
+/* ===============================
+   BANNER CORE (DESKTOP)
+================================ */
+.banner-visual {
+  width: 100%;
+  height: 240px; /* ⬆️ increased */
+  padding: 2.1rem 4.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+}
+
+/* ===============================
+   TEXT
+================================ */
+.banner-text {
+  max-width: 52%;
+  z-index: 2;
+}
+
+.banner-best-seller {
+  background: linear-gradient(90deg, #fd3e81, #21d4fd);
+  font-size: 0.75rem;
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  display: inline-block;
+  margin-bottom: 0.85rem;
+}
+
+.banner-main-title {
+  font-size: 2.05rem; /* refined */
+  font-weight: 700;
+  line-height: 1.25;
+  margin-bottom: 0.6rem;
+}
+
+.banner-caption-desc {
+  font-size: 1.05rem;
+  opacity: 0.9;
+  margin-bottom: 1.2rem;
+}
+
+/* ===============================
+   IMAGE (RIGHT ALIGNED)
+================================ */
+.banner-image-wrap {
+  position: absolute;
+  right: 3.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+/* subtle glow ONLY near image */
+.banner-image-wrap::before {
+  content: "";
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255,255,255,0.35) 0%,
+    rgba(255,255,255,0.18) 45%,
+    transparent 75%
+  );
+  right: 5px;
+  z-index: 0;
+}
+
+.banner-img-graphic {
+  position: relative;
+  z-index: 1;
+  max-height: 200px;
+  max-width: 340px;
+  object-fit: contain;
+  transform: scale(1.22); /* ⬆️ more zoom */
+  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.28));
+}
+
+/* ===============================
+   THEMES
+================================ */
+.banner-tech {
+  background: linear-gradient(120deg, #21d4fd, #36ceb6);
+}
+.banner-fashion {
+  background: linear-gradient(120deg, #fd3e81, #ff9a9e);
+}
+.banner-grocery {
+  background: linear-gradient(120deg, #56ab2f, #a8e063);
+  color: #083b08;
+}
+.banner-dark {
+  background: linear-gradient(120deg, #141e30, #243b55);
+}
+/* ===============================
+   REPUBLIC DAY THEME 🇮🇳
+================================ */
+.banner-republic {
+  background: linear-gradient(
+    120deg,
+    #ff9933 0%,     /* saffron */
+    #ffffff 45%,
+    #138808 100%    /* green */
+  );
+  color: #1a1a1a;
+}
+
+/* CTA button style for republic */
+.banner-republic .btn {
+  background: #138808;
+  color: #fff;
+  border: none;
+}
+
+.banner-republic .btn:hover {
+  background: #0f6b06;
+}
+
+/* Badge tweak */
+.banner-republic .banner-best-seller {
+  background: linear-gradient(90deg, #ff9933, #138808);
+  color: #fff;
+}
+
+
+/* ===============================
+   CONTROLS
+================================ */
+.carousel-control-prev,
+.carousel-control-next {
+  width: 3%;
+}
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+  filter: invert(1);
+}
+
+/* ===============================
+   MOBILE (IMPROVED – FLIPKART STYLE)
+================================ */
+@media (max-width: 768px) {
   .banner-visual {
-    padding: 3rem 2.5rem 2.1rem 2.5rem;
-    min-height: 230px;
-    align-items: center;
-    box-sizing: border-box;
-    position: relative;
-    overflow: hidden;
+    height: 210px; /* ⬆️ increased for better balance */
+    padding: 1.8rem 1.6rem;
+    justify-content: center;
+    text-align: left;
   }
-  .banner-img-graphic {
-    max-width: 270px;
-    width: 95%;
-    min-width: 140px;
-    height: 180px;
-    object-fit: contain;
-    border-radius: 1.1rem;
-    box-shadow: 0 8px 32px #0080800d, 0 2px 8px #fd3e8147;
-    background: #fff6;
-    animation: floatImg 2.5s infinite ease-in-out alternate;
+
+  .banner-text {
+    max-width: 100%;
   }
-  @keyframes floatImg {
-    0% {
-      transform: translateY(0);
-    }
-    100% {
-      transform: translateY(-12px);
-    }
+
+  .banner-best-seller {
+    font-size: 0.78rem;
+    margin-bottom: 0.7rem;
   }
+
   .banner-main-title {
-    font-size: 2.0rem;
-    letter-spacing: 0.4px;
-    line-height: 1.16;
-    font-family: "Poppins", sans-serif;
+    font-size: 1.65rem; /* ⬆️ bigger & readable */
+    line-height: 1.3;
+    margin-bottom: 0.7rem;
   }
-  .banner-gradient-text {
-    background: linear-gradient(90deg, #fd3e81, #21d4fd 90%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    color: transparent;
-  }
+
   .banner-caption-desc {
-    font-size: 1.16rem;
-    font-family: "Inter", sans-serif;
-    letter-spacing: 0.3px;
-  }
-  .banner-countdown {
-    background: #fff3;
-    color: #08192b;
-    font-weight: 500;
-    font-family: "Poppins", sans-serif;
     font-size: 1rem;
-  }
-  .banner-best-seller,
-  .banner-hit-offer {
-    background: linear-gradient(99deg, #fd3e81, #21d4fd 70%);
-    font-weight: 600;
-    letter-spacing: 0.1px;
-  }
-  .banner-decor-blob {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    width: 240px;
-    height: 160px;
-    background: radial-gradient(ellipse at 88% 90%, #fff 60%, transparent 92%);
-    z-index: 0;
-    opacity: 0.25;
-    pointer-events: none;
-  }
-  .carousel-indicators [data-bs-target] {
-    border-radius: 1rem;
-    width: 18px;
-    height: 8px;
-    background: #008080 !important;
-    opacity: 0.25;
-    margin: 0 4px;
-  }
-  .carousel-indicators .active {
-    opacity: 0.8 !important;
-    background: #fd3e81 !important;
-    width: 28px;
-  }
-  /* Animate in for slide content */
-  .animate-slide-in-up {
-    animation: slideInUp 1.22s cubic-bezier(0.27, 1.42, 0.7, 1) forwards;
-  }
-  @keyframes slideInUp {
-    0% {
-      opacity: 0;
-      transform: translateY(70px);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  /* Responsive Banner */
-  @media (max-width: 991px) {
-    .banner-img-graphic {
-      max-width: 170px;
-      height: 120px;
-    }
-    .banner-visual {
-      padding: 2.3rem 1rem 2rem 1rem;
-      min-height: 180px;
-    }
-  }
-  @media (max-width: 767px) {
-    .main-banner-section {
-      border-radius: 1rem;
-    }
-    .banner-img-graphic {
-      display: none !important;
-    }
-    .banner-visual {
-      min-height: 156px;
-      padding: 1.15rem 0.2rem 1.1rem 0.2rem;
-    }
+    margin-bottom: 1.2rem;
+    opacity: 0.92;
   }
 
-  /* Product card hover/focus effect */
-  .product-card:hover,
-  .product-card:focus-visible {
-    box-shadow: 0 12px 35px rgba(0, 128, 128, 0.45);
-    transform: translateY(-7px);
-    outline: none;
-  }
-  .product-card:hover img,
-  .product-card:focus-visible img {
-    transform: scale(1.08);
+  .banner-text a.btn {
+    font-size: 0.95rem;
+    padding: 0.55rem 1.6rem;
   }
 
-  /* Animations for carousel captions */
-  .carousel-caption-content {
-    animation: slideInLeft 1s ease forwards;
-  }
-  .carousel-caption-icon {
-    animation: fadeInUp 1.2s ease forwards;
-  }
-  @keyframes slideInLeft {
-    from {
-      opacity: 0;
-      transform: translateX(-50px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(40px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  /* Hide image on mobile */
+  .banner-image-wrap {
+    display: none;
   }
 
-  /* General colors */
-  .text-teal {
-    color: #008080 !important;
+  /* Indicators slightly lower */
+  .carousel-indicators {
+    bottom: -6px;
   }
-  .btn-teal {
-    background-color: #008080;
-    color: #fff;
-  }
-  .btn-teal:hover {
-    background-color: #006666;
-    color: #fff;
-  }
+}
 
-  /* Top Gadget Section */
-  .top-gadget-section {
-    background: linear-gradient(120deg, #ebfaff 55%, #ffe4e1 100%);
-    min-height: 310px;
-    position: relative;
-    margin-bottom: 2.5rem;
+/* ===============================
+   RECENTLY VIEWED – FLIPKART STYLE
+================================ */
+
+.recently-viewed-wrapper {
+  position: relative;
+}
+
+/* TRACK */
+.recently-viewed-track {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding-bottom: 0.5rem;
+}
+.recently-viewed-track::-webkit-scrollbar {
+  display: none;
+}
+
+/* CARD */
+.rv-card {
+  flex: 0 0 auto;
+  background: #fff;
+  border-radius: 10px;
+  padding: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  transition: transform 0.25s, box-shadow 0.25s;
+}
+.rv-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0,128,128,0.2);
+}
+
+/* IMAGE */
+.rv-img-box {
+  position: relative;
+  height: 170px;
+  background: #f6f7f8;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.rv-img-box img {
+  max-height: 150px;
+  width: 100%;
+  object-fit: contain;
+}
+
+/* BADGE */
+.rv-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  font-size: 0.7rem;
+  border-radius: 999px;
+}
+
+/* TEXT */
+.rv-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-top: 8px;
+  min-height: 2.6rem;
+}
+.rv-price {
+  font-weight: 700;
+  color: #0d6efd;
+  margin-bottom: 0;
+}
+.rv-price small {
+  color: #777;
+  text-decoration: line-through;
+  margin-left: 4px;
+  font-weight: 500;
+}
+
+/* NAV BUTTONS */
+.rv-nav {
+  position: absolute;
+  top: 40%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: #111;
+  color: #fff;
+  opacity: 0.85;
+}
+.rv-prev { left: -12px; }
+.rv-next { right: -12px; }
+
+/* ===============================
+   RESPONSIVE WIDTH CONTROL
+================================ */
+
+/* DESKTOP: 5.5 cards */
+@media (min-width: 992px) {
+  .rv-card {
+    width: calc((100% - (14px * 5)) / 5.5);
   }
-  .gadget-hero-img {
-    transition: transform 0.35s cubic-bezier(0.2, 1.1, 0.6, 1.05);
-    box-shadow: 0 7px 24px #00a4a480, 0 1.5px 7px #1b103450;
-    border: 6px solid #fff0;
-    background: #fff;
+}
+
+/* TABLET */
+@media (min-width: 576px) and (max-width: 991px) {
+  .rv-card {
+    width: calc((100% - (14px * 3)) / 3.3);
   }
-  .gadget-hero-img:hover {
-    transform: rotate(-7deg) scale(1.04);
-    border-color: #ffe4e1;
+}
+
+/* MOBILE: 2.5 cards */
+@media (max-width: 575px) {
+  .rv-card {
+    width: calc((100% - 14px) / 2.5);
   }
-  /* Decorative blobs/circles */
-  .decor-gadget-bg1,
-  .decor-gadget-bg2 {
-    position: absolute;
-    z-index: 1;
-    pointer-events: none;
-    border-radius: 50%;
-    opacity: 0.14;
-    filter: blur(2px);
-  }
-  .decor-gadget-bg1 {
-    width: 220px;
-    height: 170px;
-    left: -60px;
-    bottom: -34px;
-    background: #2addd4;
-  }
-  .decor-gadget-bg2 {
-    width: 130px;
-    height: 125px;
-    right: -38px;
-    top: -42px;
-    background: #fd3e81;
-  }
-  .top-gadget-section .btn {
-    font-size: 1.07rem;
-    letter-spacing: 0.3px;
-  }
-  @media (max-width: 767px) {
-    .top-gadget-section {
-      flex-direction: column !important;
-      padding: 2.2rem 0.7rem 2rem 0.7rem;
-    }
-    .gadget-hero-img {
-      max-width: 92vw;
-      margin-top: 1rem;
-    }
-    .decor-gadget-bg1 {
-      left: -35px;
-      bottom: -30px;
-      width: 108px;
-      height: 100px;
-    }
-    .decor-gadget-bg2 {
-      right: -19px;
-      top: -22px;
-      width: 66px;
-      height: 61px;
-    }
-  }
+}
+
+/* Ensure banner button is always on top */
+.banner-text {
+  position: relative; /* needed for z-index to work */
+  z-index: 10;
+}
+
+.banner-text a.btn {
+  position: relative;
+  z-index: 10; /* ensure button is above everything */
+}
+
+/* Keep the banner image behind and not blocking clicks */
+.banner-image-wrap {
+  pointer-events: none; /* already present, keep it */
+  z-index: 1; /* lower than text/button */
+}
+
+/* Dynamic section responsive styles */
+.rv-wrapper { position: relative; }
+.rv-track {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding-bottom: 0.5rem;
+}
+.rv-track::-webkit-scrollbar { display: none; }
+.rv-card { flex: 0 0 auto; background: #fff; border-radius: 10px; padding: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); transition: transform 0.25s, box-shadow 0.25s; }
+.rv-card:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,128,128,0.2); }
+.rv-img-box { position: relative; height: 170px; background: #f6f7f8; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+.rv-img-box img { max-height: 150px; width: 100%; object-fit: contain; }
+.rv-badge { position: absolute; top: 6px; left: 6px; font-size: 0.7rem; border-radius: 999px; }
+.rv-title { font-size: 0.9rem; font-weight: 600; margin-top: 8px; min-height: 2.6rem; }
+.rv-price { font-weight: 700; color: #0d6efd; margin-bottom: 0; }
+.rv-price small { color: #777; text-decoration: line-through; margin-left: 4px; font-weight: 500; }
+.rv-nav { position: absolute; top: 40%; transform: translateY(-50%); z-index: 10; width: 36px; height: 36px; border-radius: 50%; border: none; background: #111; color: #fff; opacity: 0.85; cursor: pointer; }
+.rv-prev { left: -12px; }
+.rv-next { right: -12px; }
+
+/* RESPONSIVE WIDTHS */
+@media (min-width: 992px) { .rv-card { width: calc((100% - (14px*5))/5.5); } }
+@media (min-width: 576px) and (max-width: 991px) { .rv-card { width: calc((100% - (14px*3))/3.3); } }
+@media (max-width: 575px) { .rv-card { width: calc((100% - 14px)/2.5); } .rv-nav { display: none; } }
 </style>
+<script>
+/* ===============================
+   RECENTLY VIEWED SCROLL
+================================ */
+const rvWrapper = document.getElementById('recent-products-wrapper');
+const rvPrev = document.getElementById('recent-prev');
+const rvNext = document.getElementById('recent-next');
+
+if (rvWrapper && rvPrev && rvNext) {
+  function getScrollStep() {
+    return rvWrapper.clientWidth * 0.8;
+  }
+
+  rvPrev.addEventListener('click', () => {
+    rvWrapper.scrollBy({
+      left: -getScrollStep(),
+      behavior: 'smooth'
+    });
+  });
+
+  rvNext.addEventListener('click', () => {
+    rvWrapper.scrollBy({
+      left: getScrollStep(),
+      behavior: 'smooth'
+    });
+  });
+}
+
+/* ===============================
+   ALL PRODUCTS SCROLL
+================================ */
+const allWrapper = document.getElementById('all-products-wrapper');
+const allPrev = document.getElementById('all-prev');
+const allNext = document.getElementById('all-next');
+
+if (allWrapper && allPrev && allNext) {
+  function getAllScrollStep() {
+    return allWrapper.clientWidth * 0.8;
+  }
+
+  allPrev.addEventListener('click', () => {
+    allWrapper.scrollBy({
+      left: -getAllScrollStep(),
+      behavior: 'smooth'
+    });
+  });
+
+  allNext.addEventListener('click', () => {
+    allWrapper.scrollBy({
+      left: getAllScrollStep(),
+      behavior: 'smooth'
+    });
+  });
+}
+
+{% for section in home_sections %}
+(function(){
+  const track = document.getElementById('track-{{ forloop.counter }}');
+  const prev = document.getElementById('prev-{{ forloop.counter }}');
+  const next = document.getElementById('next-{{ forloop.counter }}');
+  if(track && prev && next){
+    const scrollStep = track.clientWidth * 0.8;
+    prev.addEventListener('click', ()=>{ track.scrollBy({left: -scrollStep, behavior:'smooth'}); });
+    next.addEventListener('click', ()=>{ track.scrollBy({left: scrollStep, behavior:'smooth'}); });
+  }
+})();
+{% endfor %}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Kartloop",
+  "url": "{{ request.build_absolute_uri }}",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "{{ request.build_absolute_uri }}search/?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+
+
 
 {% endblock %}

@@ -1,12 +1,134 @@
 {% extends 'base.html' %}
+{% load form_tags %}
+
 {% block content %}
-<h2>Edit Product: {{ product.name }}</h2>
+<div class="container mt-5 mb-5">
+  <div class="card shadow-lg rounded">
+    <div class="card-header bg-primary text-white">
+      <h4 class="mb-0"><i class="fas fa-edit"></i> Edit Product: {{ product.name }}</h4>
+    </div>
+    <div class="card-body">
 
-<form method="post" enctype="multipart/form-data">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">Save Changes</button>
-  <a href="{% url 'dashboard:manage_products' %}">Cancel</a>
-</form>
+      <form method="POST" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        <div class="row">
 
+          <!-- Product Name -->
+          <div class="col-md-6 mb-3">
+            <label for="id_name" class="form-label">Product Name</label>
+            {{ form.name|add_class:"form-control" }}
+          </div>
+
+          <!-- Category -->
+          <div class="col-md-6 mb-3">
+            <label for="id_category" class="form-label">Category</label>
+            {{ form.category|add_class:"form-select" }}
+          </div>
+
+          <!-- MRP Price -->
+          <div class="col-md-4 mb-3">
+            <label for="id_mrp_price" class="form-label">MRP (₹)</label>
+            {{ form.mrp_price|add_class:"form-control" }}
+          </div>
+
+          <!-- Selling Price -->
+          <div class="col-md-4 mb-3">
+            <label for="id_selling_price" class="form-label">Selling Price (₹)</label>
+            {{ form.selling_price|add_class:"form-control" }}
+          </div>
+
+          <!-- Discount Preview -->
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Offer</label>
+            <input type="text" id="discountPreview" class="form-control" disabled value="No Offer">
+          </div>
+
+          <!-- Stock -->
+          <div class="col-md-4 mb-3">
+            <label for="id_stock" class="form-label">Stock</label>
+            {{ form.stock|add_class:"form-control" }}
+          </div>
+
+          <!-- Brand -->
+          <div class="col-md-4 mb-3">
+            <label for="id_brand" class="form-label">Brand</label>
+            {{ form.brand|add_class:"form-control" }}
+          </div>
+
+          <!-- Description -->
+          <div class="col-md-12 mb-3">
+            <label for="id_description" class="form-label">Product Description</label>
+            {{ form.description|add_class:"form-control" }}
+          </div>
+
+          <!-- Product Image -->
+          <div class="col-md-6 mb-3">
+            <label for="id_image" class="form-label">Product Image</label>
+            {{ form.image|add_class:"form-control" }}
+            <small class="text-muted">Max file size: 2MB</small>
+          </div>
+
+          <div class="col-md-6 d-flex align-items-center">
+            {% if product.image %}
+              <img id="previewImage" src="{{ product.image.url }}" alt="Current Image" class="img-thumbnail" width="150" />
+            {% else %}
+              <img id="previewImage" src="#" alt="Image Preview" class="img-thumbnail d-none" width="150" />
+            {% endif %}
+          </div>
+
+        </div>
+
+        <!-- Submit -->
+        <div class="mt-3">
+          <button type="submit" class="btn btn-success px-4">
+            <i class="fas fa-save"></i> Save Changes
+          </button>
+          <a href="{% url 'dashboard:manage_products' %}" class="btn btn-secondary ms-2">Cancel</a>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  // Image Preview
+  const imageInput = document.getElementById("id_image");
+  const previewImage = document.getElementById("previewImage");
+
+  imageInput.addEventListener("change", function () {
+    const file = this.files[0];
+    if (file) {
+      previewImage.classList.remove("d-none");
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        previewImage.setAttribute("src", e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // Auto Discount Preview
+  const mrpInput = document.getElementById("id_mrp_price");
+  const sellingInput = document.getElementById("id_selling_price");
+  const discountBox = document.getElementById("discountPreview");
+
+  function calculateDiscount() {
+    const mrp = parseFloat(mrpInput.value);
+    const selling = parseFloat(sellingInput.value);
+
+    if (mrp && selling && selling < mrp) {
+      const discount = Math.round(((mrp - selling) / mrp) * 100);
+      discountBox.value = discount + "% OFF";
+    } else {
+      discountBox.value = "No Offer";
+    }
+  }
+
+  // Trigger initial discount calculation
+  calculateDiscount();
+
+  mrpInput.addEventListener("input", calculateDiscount);
+  sellingInput.addEventListener("input", calculateDiscount);
+</script>
 {% endblock %}

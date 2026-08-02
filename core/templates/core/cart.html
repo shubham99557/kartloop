@@ -5,32 +5,23 @@
   <meta charset="UTF-8" />
   <title>Your Cart - Kartloop</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <link rel="stylesheet" href="{% static 'css/style.css' %}" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
       background-color: #e0f2f1;
-      margin: 0;
-      padding: 0;
     }
-
     .container {
       max-width: 1100px;
       margin: 40px auto;
       padding: 30px;
-      background: #ffffff;
+      background: #fff;
       border-radius: 12px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
     }
-
-    h1 {
-      text-align: center;
-      color: #00796b;
-      font-weight: 700;
-      margin-bottom: 30px;
-    }
-
     .cart-item {
       display: flex;
       gap: 20px;
@@ -38,201 +29,138 @@
       border-bottom: 1px solid #ddd;
       align-items: center;
     }
-
-    .cart-item:last-child {
-      border-bottom: none;
-    }
-
     .cart-item img {
       width: 100px;
       height: 100px;
       object-fit: cover;
       border-radius: 10px;
-      border: 1px solid #ccc;
+      cursor: pointer;
     }
-
-    .item-info {
-      flex: 1;
-    }
-
-    .item-info h4 {
-      font-size: 18px;
-      margin: 0 0 6px;
-      color: #212121;
-      font-weight: 600;
-    }
-
-    .item-info p {
-      margin: 4px 0;
-      font-size: 14px;
-      color: #555;
-    }
-
-    .price {
-      font-weight: bold;
-      color: #009688;
-    }
-
-    .quantity-form {
-      display: flex;
-      align-items: center;
-      margin-top: 8px;
-    }
-
-    .quantity-form button {
+    .quantity-btn {
       background: #009688;
       color: white;
       border: none;
       padding: 5px 12px;
       font-size: 18px;
-      font-weight: bold;
-      border-radius: 4px;
       cursor: pointer;
-      transition: background 0.3s ease;
+      border-radius: 4px;
     }
-
-    .quantity-form button:hover {
+    .quantity-btn:hover {
       background: #00796b;
     }
-
-    .quantity-form span {
-      margin: 0 12px;
-      font-size: 16px;
-      font-weight: 600;
+    .cart-actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 25px;
     }
-
-    .item-actions {
-      text-align: right;
-    }
-
-    .remove-btn {
-      background: #ff4d4f;
-      color: #fff;
-      padding: 8px 12px;
-      border-radius: 6px;
-      text-decoration: none;
-      font-size: 14px;
-      transition: background 0.3s;
-      display: inline-block;
-    }
-
-    .remove-btn:hover {
-      background: #c72b2b;
-    }
-
-    .cart-summary {
-      text-align: right;
-      margin-top: 40px;
-      font-size: 1.1rem;
-      border-top: 1px solid #ccc;
-      padding-top: 20px;
-    }
-
-    .cart-summary h3 {
-      color: #00796b;
-      font-size: 24px;
-      font-weight: 700;
-    }
-
-    .checkout-btn,
-    .back-btn {
-      display: inline-block;
-      padding: 12px 24px;
-      font-size: 15px;
-      font-weight: 600;
-      text-decoration: none;
-      border-radius: 6px;
-      margin-top: 15px;
-      transition: background 0.3s ease;
-    }
-
-    .checkout-btn {
-      background: #fb641b;
-      color: white;
-    }
-
-    .checkout-btn:hover {
-      background: #d75a10;
-    }
-
     .back-btn {
       background: #607d8b;
       color: white;
-      margin-right: 10px;
+      padding: 12px 20px;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 600;
     }
-
-    .back-btn:hover {
-      background: #455a64;
-    }
-
-    @media (max-width: 768px) {
-      .cart-item {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-
-      .item-actions {
-        width: 100%;
-        text-align: left;
-        margin-top: 10px;
-      }
-
-      .cart-summary {
-        text-align: center;
-      }
+    .checkout-btn {
+      background: #fb641b;
+      color: white;
+      padding: 12px 20px;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 600;
     }
   </style>
 </head>
+
 <body>
-  <div class="container">
-    <h1>Your Cart</h1>
+<div class="container">
+  <h1>Your Cart</h1>
 
-    {% if items %}
-      {% for item in items %}
-        <div class="cart-item">
+  {% if items %}
+    {% for item in items %}
+      <div class="cart-item" data-item-id="{{ item.id }}">
+        <a href="{% url 'core:product_detail' item.product.id %}">
           <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
-          <div class="item-info">
-            <h4>{{ item.product.name }}</h4>
+        </a>
 
-            {% if item.product.offer_price and item.product.offer_price < item.product.price %}
-              <p class="price">Price: ₹{{ item.product.offer_price }}</p>
-              <p><small style="text-decoration: line-through; color: #888;">₹{{ item.product.price }}</small></p>
-            {% else %}
-              <p class="price">Price: ₹{{ item.product.price }}</p>
-            {% endif %}
+        <div style="flex:1">
+          <a href="{% url 'core:product_detail' item.product.id %}" style="text-decoration:none;color:#000">
+            <h4>{{ item.product.name }}{% if item.variant %} ({{ item.variant.size }}){% endif %}</h4>
+          </a>
 
-            <p>Subtotal: ₹{{ item.subtotal }}</p>
+          <p class="price">₹{{ item.unit_price }}</p>
+          <p>Subtotal: ₹<span class="item-subtotal">{{ item.subtotal }}</span></p>
 
-            <p>Stock Left: {{ item.product.stock }}</p>
-            <p>Delivery Estimate: {{ item.product.delivery_estimate }}</p>
-
-            <form method="POST" action="{% url 'core:update_cart_quantity' item.id %}" class="quantity-form">
-              {% csrf_token %}
-              <button type="submit" name="action" value="decrease">−</button>
-              <span>{{ item.quantity }}</span>
-              <button type="submit" name="action" value="increase">＋</button>
-            </form>
-          </div>
-          <div class="item-actions">
-            <a href="{% url 'core:remove_from_cart' item.id %}" class="remove-btn">
-              <i class="fas fa-trash-alt"></i> Remove
-            </a>
+          <div>
+            <button type="button" class="quantity-btn decrement">−</button>
+            <span class="item-qty">{{ item.quantity }}</span>
+            <button type="button" class="quantity-btn increment">＋</button>
           </div>
         </div>
-      {% endfor %}
 
-      <div class="cart-summary">
-        <h3>Total: ₹{{ total }}</h3>
-        <a href="{% url 'core:checkout' %}" class="checkout-btn">Proceed to Checkout</a>
-        <a href="/" class="back-btn">← Continue Shopping</a>
+        <a href="{% url 'core:remove_from_cart' item.id %}" class="remove-btn">
+          <i class="fas fa-trash"></i>
+        </a>
       </div>
+    {% endfor %}
 
-    {% else %}
-      <p class="text-center fs-5">Your cart is empty.</p>
-      <div class="text-center mt-4">
-        <a href="/" class="back-btn">← Continue Shopping</a>
-      </div>
-    {% endif %}
-  </div>
+    <hr>
+
+    <h3 style="text-align:right">
+      Total: ₹<span id="cart-total">{{ total }}</span>
+    </h3>
+
+    <div class="cart-actions">
+      <a href="/" class="back-btn">← Continue Shopping</a>
+      <a href="{% url 'core:checkout' %}" class="checkout-btn">Proceed to Checkout</a>
+    </div>
+
+  {% else %}
+    <p>Your cart is empty.</p>
+    <a href="/" class="back-btn">← Continue Shopping</a>
+  {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  document.querySelectorAll('.cart-item').forEach(item => {
+    const itemId = item.dataset.itemId;
+
+    item.querySelector('.increment').addEventListener('click', () => {
+      updateQty(itemId, 'increment');
+    });
+
+    item.querySelector('.decrement').addEventListener('click', () => {
+      updateQty(itemId, 'decrement');
+    });
+  });
+
+  function updateQty(itemId, action) {
+    fetch(`/update-cart/${itemId}/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': '{{ csrf_token }}',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ action: action })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        const cartItem = document.querySelector(`[data-item-id="${itemId}"]`);
+        cartItem.querySelector('.item-qty').innerText = data.quantity;
+        cartItem.querySelector('.item-subtotal').innerText = data.subtotal;
+        document.getElementById('cart-total').innerText = data.cart_total;
+      } else {
+        alert(data.message || "Unable to update quantity");
+      }
+    })
+    .catch(err => console.error(err));
+  }
+
+});
+</script>
+
 </body>
 </html>

@@ -1,74 +1,66 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load humanize %}
+
+{% block title %}Order #{{ order.id }} Summary{% endblock %}
 
 {% block content %}
-<div class="container my-5">
-  <div class="card shadow-sm p-4">
+<div class="container my-4">
+  <h2>Order Summary - #{{ order.id }}</h2>
+  <p>Status: <strong>{{ order.status|capfirst }}</strong></p>
+  <p>Payment Method: {{ order.payment_method }}</p>
+  <p>Total Price: ₹{{ order.total_price }}</p>
+  <p>Estimated Delivery: {{ order.estimated_delivery }}</p>
 
-    <!-- Order Heading -->
-    <div class="text-center mb-4">
-      <h2 class="text-success"><i class="bi bi-check-circle-fill"></i> Order Placed Successfully!</h2>
-      <p class="text-muted">Thank you for shopping with Kartloop.</p>
-    </div>
+  <hr>
 
-    <!-- Order Info -->
-    <div class="row">
-      <div class="col-md-6 mb-3">
-        <h5>Order Details</h5>
-        <p><strong>Order ID:</strong> {{ order.id }}</p>
-        <p><strong>Status:</strong> {{ order.status|capfirst }}</p>
-        <p><strong>Placed on:</strong> {{ order.created_at|date:"F j, Y, g:i a" }}</p>
-      </div>
-      <div class="col-md-6 mb-3">
-        <h5>Delivery Address</h5>
-        <p>
-          {{ order.address.full_name }}<br>
-          {{ order.address.street_address }}<br>
-          {{ order.address.city }}, {{ order.address.state }} - {{ order.address.zip_code }}<br>
-          {{ order.address.country }}<br>
-          Phone: {{ order.address.phone }}
-        </p>
-      </div>
-    </div>
+  <h4>Items</h4>
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Quantity</th>
+        <th>Price</th>
+        <th>Subtotal</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in order.items.all %}
+      <tr>
+        <td>{{ item.product.name }}</td>
+        <td>{{ item.quantity }}</td>
+        <td>₹{{ item.price }}</td>
+        <td>₹{{ item.subtotal }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="4">No items in this order.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 
-    <!-- Method Summary -->
-    <div class="row">
-      <div class="col-md-6 mb-3">
-        <h5>Delivery Method</h5>
-        <p>{{ order.delivery_method }}</p>
-      </div>
-      <div class="col-md-6 mb-3">
-        <h5>Payment Method</h5>
-        <p>{{ order.payment_method }}</p>
-      </div>
-    </div>
+  <hr>
 
-    <!-- Ordered Items -->
-    <div class="mb-4">
-      <h5>Items Ordered</h5>
-      <ul class="list-group">
-        {% for item in order.items.all %}
-          <li class="list-group-item d-flex justify-content-between align-items-center">
-            <div>
-              <strong>{{ item.product.name }}</strong><br>
-              <small>Quantity: {{ item.quantity }}</small>
-            </div>
-            <span>₹{{ item.product.price|floatformat:2 }}</span>
-          </li>
-        {% endfor %}
-      </ul>
-    </div>
+  <h4>Shipping / Delivery</h4>
+  {% if order.shipment %}
+    <p>Courier: {{ order.shipment.courier_name|default:"Not assigned" }}</p>
+    <p>AWB Code: {{ order.shipment.awb_code|default:"Not assigned" }}</p>
+    <p>Status: {{ order.shipment.status|capfirst }}</p>
+  {% else %}
+    <p>No shipment created yet.</p>
+  {% endif %}
 
-    <!-- Grand Total -->
-    <div class="text-end mb-3">
-      <h5>Total: ₹{{ order.total_amount|floatformat:2 }}</h5>
-    </div>
+  <hr>
 
-    <!-- Continue Shopping -->
-    <div class="text-center">
-      <a href="{% url 'core:home' %}" class="btn btn-primary">Continue Shopping</a>
-    </div>
-
-  </div>
+  <h4>Shipping Address</h4>
+  {% if order.address %}
+    <p>{{ order.address.full_name }}</p>
+    <p>{{ order.address.address_line1 }} {{ order.address.address_line2 }}</p>
+    <p>{{ order.address.city }}, {{ order.address.state }} - {{ order.address.postal_code }}</p>
+    <p>{{ order.address.country }}</p>
+    <p>Phone: {{ order.address.phone }}</p>
+  {% else %}
+    <p>No address provided.</p>
+  {% endif %}
 </div>
 {% endblock %}

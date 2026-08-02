@@ -1,79 +1,144 @@
 {% extends 'base.html' %}
+{% load static %}
+{% block seo_title %}
+  {% if query %}
+    Search results for "{{ query }}" | Kartloop
+  {% elif category %}
+    {{ category|title }} Products Online | Best Price on Kartloop
+  {% else %}
+    All Products Online | Kartloop
+  {% endif %}
+{% endblock %}
+
+{% block seo_description %}
+  {% if query %}
+    Search results for "{{ query }}" on Kartloop. Find best prices and deals online.
+  {% elif category %}
+    Buy {{ category|title }} products online at best price on Kartloop. Fast delivery & easy returns.
+  {% else %}
+    Browse all products available on Kartloop at best prices.
+  {% endif %}
+{% endblock %}
+
+{% block robots_meta %}
+  {% if query %}
+    noindex, follow
+  {% elif products.number > 1 %}
+    noindex, follow
+  {% else %}
+    index, follow
+  {% endif %}
+{% endblock %}
+
+{% block canonical_url %}
+  {{ request.build_absolute_uri }}
+{% endblock %}
+
+
+
 
 {% block content %}
-<div class="container mt-4">
+<div class="mt-4">
 
   {# Dynamic heading based on search query or category #}
   {% if query %}
-    <h4 class="mb-4" style="color:#008080;">Search results for <span class="text-primary">"{{ query }}"</span></h4>
+    <h1 class="mb-4" style="color:#008080;">Search results for <span class="text-primary">"{{ query }}"</span></h1>
   {% elif category %}
-    <h4 class="mb-4" style="color:#008080;">Category: <span class="text-primary">{{ category|title }}</span></h4>
+    <h1 class="mb-4" style="color:#008080;">Category: <span class="text-primary">{{ category|title }}</span></h1>
   {% else %}
-    <h4 class="mb-4" style="color:#008080;">Products</h4>
+    <h1 class="mb-4" style="color:#008080;">Products</h1>
   {% endif %}
 
   {% if products %}
-    <div class="row g-4">
+    <div class="row g-3">
       {% for product in products %}
-        <div class="col-6 col-md-4 col-lg-3">
-          <div class="card h-100 shadow-sm border-0 rounded-3 product-card" style="transition: box-shadow 0.3s ease;">
-            
+        <div class="col-6 col-sm-6 col-md-4 col-lg-2-4">
+          <div class="card h-100 shadow-sm border-0 rounded-3 product-card position-relative overflow-hidden">
+
+            {# Discount Badge #}
+            {% if product.selling_price and product.selling_price < product.mrp_price %}
+              <span class="badge bg-danger discount-badge position-absolute top-0 start-0 m-2">
+                {{ product.discount_percent }}% OFF
+              </span>
+            {% endif %}
+
             <a href="{% url 'core:product_detail' product.id %}" class="text-decoration-none text-dark">
-              <div class="position-relative overflow-hidden" style="min-height: 280px; display:flex; align-items:center; justify-content:center;">
-                <img src="{{ product.image.url }}" 
-                     alt="{{ product.name }}" 
-                     class="card-img-top p-3" 
-                     style="max-height: 260px; object-fit: contain; transition: transform 0.3s ease;">
+              <div class="position-relative overflow-hidden product-img-container">
+                {% if product.image %}
+                  <img src="{{ product.image.url }}"
+                       alt="{{ product.name }} - Buy Online at Best Price"
+                       class="card-img-top p-2 product-img">
+                {% else %}
+                  <img src="{% static 'images/default-product.png' %}" alt="No Image" class="card-img-top p-2 product-img">
+                {% endif %}
               </div>
 
-              <div class="card-body p-3">
-                <h5 class="card-title fs-6 fw-semibold" style="min-height: 3rem; line-height:1.1;">
+              <div class="card-body p-2 text-center">
+                {# Product Title with Highlight #}
+                <h6 class="card-title fw-semibold product-title" title="{{ product.name }}">
                   {% if product.highlighted_name %}
-                    {{ product.highlighted_name|safe }}
+                    {{ product.highlighted_name|truncatechars:25|safe }}
                   {% else %}
-                    {{ product.name }}
+                    {{ product.name|truncatechars:25 }}
                   {% endif %}
-                </h5>
-                <div class="d-flex align-items-center gap-2">
-                  {% if product.offer_price and product.offer_price < product.price %}
-                    <p class="card-text text-teal fw-bold fs-5 mb-0">₹{{ product.offer_price }}</p>
-                    <small class="text-muted text-decoration-line-through fs-6">₹{{ product.price }}</small>
+                </h6>
+
+                {# Highlighted Description (Optional) #}
+                {% if product.highlighted_description %}
+                  <p class="small text-muted mb-1">{{ product.highlighted_description|truncatechars:50|safe }}</p>
+                {% endif %}
+
+                {# Price Display #}
+                <div class="d-flex justify-content-center align-items-center gap-1 mt-1">
+                  {% if product.selling_price and product.selling_price < product.mrp_price %}
+                    <p class="card-text text-teal fw-bold mb-0">₹{{ product.selling_price }}</p>
+                    <small class="text-muted text-decoration-line-through">₹{{ product.mrp_price }}</small>
                   {% else %}
-                    <p class="card-text text-teal fw-bold fs-5 mb-0">₹{{ product.price }}</p>
+                    <p class="card-text text-teal fw-bold mb-0">₹{{ product.mrp_price }}</p>
                   {% endif %}
                 </div>
+
+                {# Vendor Name Optional #}
+                {% if product.vendor %}
+                  <p class="text-muted small mb-0">Sold by: {{ product.vendor.user.username }}</p>
+                {% endif %}
               </div>
             </a>
 
-            <div class="card-footer bg-white border-0 px-3 py-2 text-center">
-              <a href="{% url 'core:add_to_cart' product.id %}" class="btn btn-teal btn-sm w-100">
-                <i class="bi bi-cart-plus me-2"></i> Add to Cart
-              </a>
+            {# Add to Cart Button with Stock Check #}
+            <div class="card-footer bg-white border-0 px-2 py-1 text-center">
+            {% if product.has_stock %}
+                <a href="{% url 'core:add_to_cart' product.id %}" class="btn btn-teal btn-sm w-100">
+                <i class="bi bi-cart-plus me-1"></i> Add
+                </a>
+            {% else %}
+                <button class="btn btn-secondary btn-sm w-100" disabled>Out of Stock</button>
+            {% endif %}
             </div>
+
 
           </div>
         </div>
       {% endfor %}
     </div>
 
+    {# Pagination #}
     {% if products.has_other_pages %}
-      <nav aria-label="Page navigation" class="mt-5">
+      <nav aria-label="Page navigation" class="mt-4">
         <ul class="pagination justify-content-center flex-wrap gap-1">
           {% if products.has_previous %}
             <li class="page-item">
-              <a href="?{% if query %}q={{ query|urlencode }}&{% endif %}{% if category %}category={{ category|urlencode }}&{% endif %}page={{ products.previous_page_number }}" class="page-link" aria-label="Previous">&laquo;</a>
+              <a href="?{% if query %}q={{ query|urlencode }}&{% endif %}{% if category %}category={{ category|urlencode }}&{% endif %}page={{ products.previous_page_number }}" class="page-link">&laquo;</a>
             </li>
           {% endif %}
-
           {% for num in products.paginator.page_range %}
             <li class="page-item {% if products.number == num %}active{% endif %}">
               <a href="?{% if query %}q={{ query|urlencode }}&{% endif %}{% if category %}category={{ category|urlencode }}&{% endif %}page={{ num }}" class="page-link">{{ num }}</a>
             </li>
           {% endfor %}
-
           {% if products.has_next %}
             <li class="page-item">
-              <a href="?{% if query %}q={{ query|urlencode }}&{% endif %}{% if category %}category={{ category|urlencode }}&{% endif %}page={{ products.next_page_number }}" class="page-link" aria-label="Next">&raquo;</a>
+              <a href="?{% if query %}q={{ query|urlencode }}&{% endif %}{% if category %}category={{ category|urlencode }}&{% endif %}page={{ products.next_page_number }}" class="page-link">&raquo;</a>
             </li>
           {% endif %}
         </ul>
@@ -96,23 +161,86 @@
   {% endif %}
 </div>
 
+{# ================== KEEP ALL EXISTING CSS ================== #}
 <style>
-  .product-card:hover {
-    box-shadow: 0 6px 18px rgba(0, 128, 128, 0.4);
+/* Grid adjustments for 5 products per row on desktop */
+@media (min-width: 1200px) {
+  .col-lg-2-4 {
+    flex: 0 0 20%;
+    max-width: 20%;
   }
-  .product-card:hover img {
-    transform: scale(1.05);
-  }
-  .text-teal {
-    color: #008080 !important;
-  }
-  .btn-teal {
-    background-color: #008080;
-    color: #fff;
-  }
-  .btn-teal:hover {
-    background-color: #006666;
-    color: #fff;
-  }
+}
+
+/* Card hover effects */
+.product-card {
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+.product-card:hover {
+  box-shadow: 0 10px 25px rgba(0, 128, 128, 0.4);
+  transform: translateY(-3px);
+}
+.product-img-container {
+  min-height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f9f9f9;
+}
+.product-img {
+  max-height: 140px;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+}
+.product-img:hover {
+  transform: scale(1.05);
+}
+
+/* Title truncation */
+.product-title {
+  min-height: 2.5rem;
+  font-size: 0.85rem;
+  line-height: 1.1rem;
+}
+
+/* Colors */
+.text-teal {
+  color: #008080 !important;
+}
+.btn-teal {
+  background-color: #008080;
+  color: #fff;
+  font-weight: 500;
+  font-size: 0.8rem;
+}
+.btn-teal:hover {
+  background-color: #006666;
+  color: #fff;
+}
+
+/* Discount badge */
+.discount-badge {
+  font-size: 0.65rem;
+  padding: 0.2rem 0.4rem;
+  z-index: 2;
+}
+
+/* Pagination */
+.page-item.active .page-link {
+  background-color: #008080;
+  border-color: #008080;
+  color: #fff;
+}
+.page-link {
+  color: #008080;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.7rem;
+}
+.page-link:hover {
+  background-color: #006666;
+  color: #fff;
+  border-color: #006666;
+}
 </style>
+
+
 {% endblock %}
